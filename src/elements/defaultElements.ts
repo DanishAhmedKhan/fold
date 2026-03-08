@@ -26,6 +26,35 @@ export const TextElement: EditorElement = {
     },
 }
 
+export const ButtonElement: EditorElement = {
+    type: 'button',
+
+    name: 'Button',
+
+    create() {
+        return {
+            props: {
+                label: 'Button',
+            },
+            styles: {
+                display: 'flex',
+                justifyContent: 'center',
+                padding: '10px',
+                color: 'white',
+                background: 'black',
+            },
+        }
+    },
+
+    render(doc: Document, node: EditorNode) {
+        const el = doc.createElement('div')
+
+        el.innerText = node.props.label
+
+        return el
+    },
+}
+
 export const BoxElement: EditorElement = {
     type: 'box',
 

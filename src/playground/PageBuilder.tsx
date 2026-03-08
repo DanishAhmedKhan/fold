@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react'
-import { BoxElement, TextElement } from '../elements/defaultElements'
+import { BoxElement, ButtonElement, TextElement } from '../elements/defaultElements'
 import { Editor } from '../core/Editor'
 import { ElementLibrary } from '../react/ElementLibrary'
 import { Canvas } from '../react/Canvas'
@@ -13,6 +13,7 @@ export const PageBuilder: React.FC<EditorProps> = () => {
         const e = new Editor()
 
         e.registerElement(TextElement)
+        e.registerElement(ButtonElement)
         e.registerElement(BoxElement)
 
         return e

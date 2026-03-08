@@ -64,6 +64,10 @@ export class IframeRenderer {
                     break
 
                 case 'SELECT_NODE':
+                case 'SELECT_NODES':
+                case 'TOGGLE_NODE_SELECTION':
+                case 'CLEAR_SELECTION':
+                    this.updateSelectionOverlay()
                     break
 
                 case 'HOVER_NODE':

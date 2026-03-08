@@ -21,6 +21,7 @@ export class EditorStore {
                     styles: {},
                 },
             },
+            selectedIds: new Set<string>(),
         }
     }
 

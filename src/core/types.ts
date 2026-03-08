@@ -9,7 +9,7 @@ export interface EditorNode {
     parent: string | null
     children: string[]
 
-    props: Record<string, any>
+    props: Record<string, unknown>
 
     styles: NodeStyles
 }
@@ -19,6 +19,7 @@ export interface EditorState {
 
     rootId: string
 
-    selectedId?: string
+    // selectedId?: string
+    selectedIds: Set<string>
     hoveredId?: string
 }

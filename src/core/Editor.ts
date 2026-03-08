@@ -104,10 +104,32 @@ export class Editor {
         this.store.emit({ type: 'UPDATE_PROPS', nodeId })
     }
 
-    public selectNode(nodeId: string | null) {
-        this.state.selectedId = nodeId ?? undefined
-
+    public selectNode(nodeId: string) {
+        this.state.selectedIds.clear()
+        this.state.selectedIds.add(nodeId)
         this.store.emit({ type: 'SELECT_NODE', nodeId })
+    }
+
+    toggleSelectNode(nodeId: string) {
+        const selected = this.store.state.selectedIds
+
+        if (selected.has(nodeId)) {
+            selected.delete(nodeId)
+        } else {
+            selected.add(nodeId)
+        }
+
+        this.store.emit({ type: 'TOGGLE_NODE_SELECTION', nodeId })
+    }
+
+    public clearSelection() {
+        this.state.selectedIds.clear()
+        this.store.emit({ type: 'CLEAR_SELECTION' })
+    }
+
+    public selectMultiple(nodeIds: string[]) {
+        this.state.selectedIds = new Set(nodeIds)
+        this.store.emit({ type: 'SELECT_NODES', nodeIds })
     }
 
     public hoverNode(nodeId: string | null) {

@@ -1,12 +1,16 @@
 import { Editor } from '../core/Editor'
 import { dragState } from '../core/DragState'
+import { SelectionBoxController } from '../interaction/SelectionBoxController'
 
 export class IframeInteractionManager {
     public editor: Editor
     public doc!: Document
 
+    private selectionBox: SelectionBoxController
+
     constructor(editor: Editor) {
         this.editor = editor
+        this.selectionBox = new SelectionBoxController(editor)
     }
 
     public mount(doc: Document) {
@@ -17,6 +21,8 @@ export class IframeInteractionManager {
         this.doc.addEventListener('mouseleave', this.handleMouseLeave)
         this.doc.addEventListener('dragover', this.handleDragOver)
         this.doc.addEventListener('drop', this.handleDrop)
+
+        this.selectionBox.mount(doc)
     }
 
     public destroy() {
@@ -25,6 +31,8 @@ export class IframeInteractionManager {
         this.doc.removeEventListener('mouseleave', this.handleMouseLeave)
         this.doc.removeEventListener('dragover', this.handleDragOver)
         this.doc.removeEventListener('drop', this.handleDrop)
+
+        this.selectionBox.destroy()
     }
 
     private handleClick = (e: MouseEvent) => {
@@ -37,7 +45,13 @@ export class IframeInteractionManager {
         e.stopPropagation()
 
         const id = el.dataset.nodeId!
-        this.editor.selectNode(id)
+
+        if (e.shiftKey) {
+            this.editor.toggleSelectNode(id)
+        } else {
+            console.log('node selected', id)
+            this.editor.selectNode(id)
+        }
     }
 
     private handleMouseMove = (e: MouseEvent) => {
