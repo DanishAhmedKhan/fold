@@ -2,8 +2,8 @@ import { Editor } from '../core/Editor'
 import { dragState } from '../core/DragState'
 
 export class IframeInteractionManager {
-    editor: Editor
-    doc!: Document
+    public editor: Editor
+    public doc!: Document
 
     constructor(editor: Editor) {
         this.editor = editor

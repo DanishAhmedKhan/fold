@@ -35,7 +35,7 @@ export const BoxElement: EditorElement = {
         return {
             styles: {
                 padding: '40px',
-                border: '1px solid #ccc',
+                border: '1px solid #eee',
             },
         }
     },

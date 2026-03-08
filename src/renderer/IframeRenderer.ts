@@ -24,16 +24,24 @@ export class IframeRenderer {
     public mount(iframe: HTMLIFrameElement) {
         this.iframe = iframe
 
-        iframe.srcdoc = iframeTemplate
+        iframe.style.visibility = 'hidden'
 
-        iframe.onload = () => {
-            this.doc = iframe.contentDocument!
-            this.body = this.doc.body
+        const doc = iframe.contentDocument!
 
-            this.renderInitialTree()
-            this.subscribeToEditor()
-            this.interaction.mount(this.doc)
-        }
+        doc.open()
+        doc.write(iframeTemplate)
+        doc.close()
+
+        this.doc = doc
+        this.body = doc.body
+
+        this.renderInitialTree()
+        this.subscribeToEditor()
+        this.interaction.mount(doc)
+
+        requestAnimationFrame(() => {
+            iframe.style.visibility = 'visible'
+        })
     }
 
     public subscribeToEditor() {
