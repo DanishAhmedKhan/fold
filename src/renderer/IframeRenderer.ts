@@ -1,10 +1,11 @@
-import { dragState } from '../core/DragState'
 import { Editor } from '../core/Editor'
+import { IframeInteractionManager } from '../interaction/IframeInteractionManager'
 import type { EditorNode } from '../core/types'
 import type { EditorPatch } from '../core/EditorPatch'
 
 export class IframeRenderer {
     public editor: Editor
+    public interaction!: IframeInteractionManager
 
     public iframe!: HTMLIFrameElement
     public doc!: Document
@@ -16,6 +17,7 @@ export class IframeRenderer {
 
     constructor(editor: Editor) {
         this.editor = editor
+        this.interaction = new IframeInteractionManager(editor)
     }
 
     public mount(iframe: HTMLIFrameElement) {
@@ -58,56 +60,8 @@ export class IframeRenderer {
             this.body = this.doc.body
 
             this.renderInitialTree()
-
             this.subscribeToEditor()
-
-            this.doc.addEventListener('click', (e) => {
-                const target = e.target as HTMLElement
-                const el = target.closest('[data-node-id]') as HTMLElement | null
-                if (!el) return
-
-                e.preventDefault()
-                e.stopPropagation()
-
-                const id = el.dataset.nodeId!
-                this.editor.selectNode(id)
-            })
-
-            this.doc.addEventListener('mousemove', (e) => {
-                const target = e.target as HTMLElement
-                const el = target.closest('[data-node-id]') as HTMLElement | null
-
-                if (!el) {
-                    this.editor.hoverNode(null)
-                    return
-                }
-
-                const id = el.dataset.nodeId!
-                this.editor.hoverNode(id)
-            })
-
-            this.doc.addEventListener('mouseleave', () => {
-                this.editor.hoverNode(null)
-            })
-
-            this.doc.addEventListener('dragover', (e) => {
-                e.preventDefault()
-            })
-
-            this.doc.addEventListener('drop', (e) => {
-                e.preventDefault()
-
-                const type = dragState.type
-                if (!type) return
-
-                const target = e.target as HTMLElement
-                const parent = target.closest('[data-node-id]') as HTMLElement | null
-                const parentId = parent?.dataset.nodeId || this.editor.state.rootId
-
-                this.editor.addNode(type, parentId)
-
-                dragState.type = null
-            })
+            this.interaction.mount(this.doc)
         }
     }
 
@@ -122,12 +76,18 @@ export class IframeRenderer {
                     this.unmountNode(patch.nodeId)
                     break
 
+                case 'MOVE_NODE':
+                    this.moveNode(patch.nodeId)
+                    break
+
                 case 'UPDATE_STYLE':
                     this.updateNodeStyles(patch.nodeId)
                     break
 
-                case 'MOVE_NODE':
-                    this.moveNode(patch.nodeId)
+                case 'SELECT_NODE':
+                    break
+
+                case 'HOVER_NODE':
                     break
             }
         })
@@ -147,7 +107,6 @@ export class IframeRenderer {
         const element = this.editor.registry.get(node.type)
 
         const el = element ? element.render(this.doc, node) : this.doc.createElement('div')
-
         el.dataset.nodeId = node.id
 
         this.nodeDomMap.set(node.id, el)
@@ -224,5 +183,6 @@ export class IframeRenderer {
     public destroy() {
         this.unsubscribe?.()
         this.nodeDomMap.clear()
+        this.interaction.destroy()
     }
 }

@@ -9,7 +9,12 @@ export function ElementLibrary({ editor }: Props) {
     const elements = editor.registry.getAll()
 
     return (
-        <div style={{ padding: 20, borderRight: '1px solid #ddd' }}>
+        <div
+            style={{
+                padding: 20,
+                borderRight: '1px solid #ddd',
+            }}
+        >
             <h3>Elements</h3>
 
             {elements.map((el) => (

@@ -1,15 +1,17 @@
 import { ElementRegistry } from '../elements/ElementRegistry'
 import type { EditorElement } from '../elements/types'
+import { generateId } from '../helper/generateId'
+import type { EditorPatch } from './EditorPatch'
 import { EditorStore } from './EditorStore'
 import type { EditorNode } from './types'
 
 export class Editor {
-    store: EditorStore
-
-    registry = new ElementRegistry()
+    public store: EditorStore
+    public registry
 
     constructor() {
         this.store = new EditorStore()
+        this.registry = new ElementRegistry()
     }
 
     get state() {
@@ -20,15 +22,11 @@ export class Editor {
         return this.state.nodes[id]
     }
 
-    public generateId() {
-        return 'node_' + Math.random().toString(36).slice(2, 9)
-    }
-
     public addNode(type: string, parentId: string) {
         const element = this.registry.get(type)
         if (!element) throw new Error('Element not registered: ' + type)
 
-        const id = this.generateId()
+        const id = generateId()
 
         const defaults = element.create()
 
@@ -157,7 +155,7 @@ export class Editor {
         this.store.emit()
     }
 
-    public subscribe(listener: () => void) {
+    public subscribe(listener: (patch: EditorPatch) => void) {
         return this.store.subscribe(listener)
     }
 

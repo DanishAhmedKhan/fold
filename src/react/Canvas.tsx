@@ -9,11 +9,9 @@ export function Canvas({ editor }: { editor: Editor }) {
 
     useEffect(() => {
         const renderer = new IframeRenderer(editor)
-
         renderer.mount(iframeRef.current!)
 
         const overlay = new OverlayManager(editor, renderer)
-
         overlay.mount(overlayRef.current!)
     }, [editor])
 

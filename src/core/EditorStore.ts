@@ -2,9 +2,9 @@ import type { EditorState } from './types'
 import type { EditorPatch } from './EditorPatch'
 
 export class EditorStore {
-    state: EditorState
+    public state: EditorState
 
-    listeners = new Set<(patch: EditorPatch) => void>()
+    public listeners = new Set<(patch: EditorPatch) => void>()
 
     constructor() {
         const rootId = 'root'
@@ -24,12 +24,12 @@ export class EditorStore {
         }
     }
 
-    subscribe(fn: (patch: EditorPatch) => void) {
+    public subscribe(fn: (patch: EditorPatch) => void) {
         this.listeners.add(fn)
         return () => this.listeners.delete(fn)
     }
 
-    emit(patch: EditorPatch) {
+    public emit(patch: EditorPatch) {
         this.listeners.forEach((l) => l(patch))
     }
 }
