@@ -88,22 +88,20 @@ export class Editor {
 
     public removeStyle(nodeId: string, key: string) {
         const node = this.state.nodes[nodeId]
-
         if (!node) return
 
         delete node.styles[key]
 
-        this.store.emit()
+        this.store.emit({ type: 'REMOVE_STYLE', nodeId })
     }
 
     public updateProp(nodeId: string, key: string, value: unknown) {
         const node = this.state.nodes[nodeId]
-
         if (!node) return
 
         node.props[key] = value
 
-        this.store.emit()
+        this.store.emit({ type: 'UPDATE_PROPS', nodeId })
     }
 
     public selectNode(nodeId: string | null) {
@@ -122,7 +120,7 @@ export class Editor {
         if (!this.state.hoveredId) return
 
         this.state.hoveredId = undefined
-        this.store.emit()
+        this.store.emit({ type: 'CLEAR_HOVER' })
     }
 
     public moveNode(nodeId: string, newParentId: string, index?: number) {
@@ -152,7 +150,7 @@ export class Editor {
             newParent.children.splice(index, 0, nodeId)
         }
 
-        this.store.emit()
+        this.store.emit({ type: 'MOVE_NODE', nodeId })
     }
 
     public subscribe(listener: (patch: EditorPatch) => void) {

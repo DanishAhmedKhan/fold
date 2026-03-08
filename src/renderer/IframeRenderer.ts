@@ -1,5 +1,6 @@
 import { Editor } from '../core/Editor'
 import { IframeInteractionManager } from '../interaction/IframeInteractionManager'
+import { iframeTemplate } from './iframeTemplate'
 import type { EditorNode } from '../core/types'
 import type { EditorPatch } from '../core/EditorPatch'
 
@@ -23,37 +24,7 @@ export class IframeRenderer {
     public mount(iframe: HTMLIFrameElement) {
         this.iframe = iframe
 
-        iframe.srcdoc = `
-        <!DOCTYPE html>
-        <html>
-            <head>
-                <style>
-                    html, body {
-                        margin:0;
-                        padding:0;
-                        min-height:100vh;
-                        box-sizing:border-box;
-                        font-family:sans-serif;
-                    }
-
-                    * {
-                        margin:0;
-                        padding:0;
-                        box-sizing:border-box;
-                    }
-
-                    body {
-                        background:white;
-                    }
-
-                    [data-node-id] {
-                        position: relative;
-                    }
-                </style>
-            </head>
-            <body></body>
-        </html>
-        `
+        iframe.srcdoc = iframeTemplate
 
         iframe.onload = () => {
             this.doc = iframe.contentDocument!
@@ -168,11 +139,11 @@ export class IframeRenderer {
         })
     }
 
-    public applyStyles(dom: HTMLElement, node: EditorNode) {
+    public applyStyles(el: HTMLElement, node: EditorNode) {
         const styles = node.styles || {}
 
         Object.entries(styles).forEach(([key, value]) => {
-            dom.style.setProperty(key, value)
+            el.style.setProperty(key, value)
         })
     }
 
