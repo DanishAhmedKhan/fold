@@ -6,7 +6,9 @@ export class OverlayManager {
     renderer: IframeRenderer
 
     overlayRoot!: HTMLElement
+
     selectionBox!: HTMLElement
+    hoverBox!: HTMLElement
 
     unsubscribe?: () => void
 
@@ -18,7 +20,7 @@ export class OverlayManager {
     mount(container: HTMLElement) {
         this.overlayRoot = container
 
-        this.createSelectionBox()
+        this.createBoxes()
 
         this.unsubscribe = this.editor.subscribe(() => {
             this.update()
@@ -28,25 +30,60 @@ export class OverlayManager {
         window.addEventListener('resize', () => this.update())
     }
 
-    createSelectionBox() {
-        const box = document.createElement('div')
+    createBoxes() {
+        const hover = document.createElement('div')
 
-        box.style.position = 'absolute'
-        box.style.border = '2px solid #3b82f6'
-        box.style.pointerEvents = 'none'
-        box.style.zIndex = '9999'
+        hover.style.position = 'absolute'
+        hover.style.border = '1px dashed #999'
+        hover.style.pointerEvents = 'none'
 
-        this.overlayRoot.appendChild(box)
+        this.overlayRoot.appendChild(hover)
 
-        this.selectionBox = box
+        this.hoverBox = hover
+
+        const selection = document.createElement('div')
+
+        selection.style.position = 'absolute'
+        selection.style.border = '2px solid #3b82f6'
+        selection.style.pointerEvents = 'none'
+
+        this.overlayRoot.appendChild(selection)
+
+        this.selectionBox = selection
     }
 
     update() {
+        this.updateHover()
+        this.updateSelection()
+    }
+
+    updateHover() {
+        const hovered = this.renderer.hoveredId
+
+        if (!hovered) {
+            this.hoverBox.style.display = 'none'
+            return
+        }
+
+        const dom = this.renderer.getDom(hovered)
+
+        if (!dom) return
+
+        const rect = dom.getBoundingClientRect()
+
+        this.hoverBox.style.display = 'block'
+
+        this.hoverBox.style.left = rect.left + 'px'
+        this.hoverBox.style.top = rect.top + 'px'
+        this.hoverBox.style.width = rect.width + 'px'
+        this.hoverBox.style.height = rect.height + 'px'
+    }
+
+    updateSelection() {
         const selectedId = this.editor.state.selectedId
 
         if (!selectedId) {
             this.selectionBox.style.display = 'none'
-
             return
         }
 

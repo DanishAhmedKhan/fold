@@ -26,10 +26,7 @@ export class Editor {
 
     public addNode(type: string, parentId: string) {
         const element = this.registry.get(type)
-
-        if (!element) {
-            throw new Error('Element not registered: ' + type)
-        }
+        if (!element) throw new Error('Element not registered: ' + type)
 
         const id = this.generateId()
 
@@ -47,30 +44,27 @@ export class Editor {
         this.state.nodes[id] = node
 
         const parent = this.state.nodes[parentId]
-
         parent.children.push(id)
 
-        this.store.emit()
+        this.store.emit({ type: 'ADD_NODE', nodeId: id })
 
         return node
     }
 
     public deleteNode(nodeId: string) {
         const node = this.state.nodes[nodeId]
-
         if (!node) return
 
         const parentId = node.parent
 
         if (parentId) {
             const parent = this.state.nodes[parentId]
-
             parent.children = parent.children.filter((id) => id !== nodeId)
         }
 
         this.deleteSubtree(nodeId)
 
-        this.store.emit()
+        this.store.emit({ type: 'REMOVE_NODE', nodeId })
     }
 
     private deleteSubtree(nodeId: string) {
@@ -87,12 +81,11 @@ export class Editor {
 
     public updateStyle(nodeId: string, key: string, value: string) {
         const node = this.state.nodes[nodeId]
-
         if (!node) return
 
         node.styles[key] = value
 
-        this.store.emit()
+        this.store.emit({ type: 'UPDATE_STYLE', nodeId })
     }
 
     public removeStyle(nodeId: string, key: string) {
@@ -115,11 +108,22 @@ export class Editor {
         this.store.emit()
     }
 
-    public selectNode(nodeId: string) {
-        if (!this.state.nodes[nodeId]) return
+    public selectNode(nodeId: string | null) {
+        this.state.selectedId = nodeId ?? undefined
 
-        this.state.selectedId = nodeId
+        this.store.emit({ type: 'SELECT_NODE', nodeId })
+    }
 
+    public hoverNode(nodeId: string | null) {
+        this.state.hoveredId = nodeId ?? undefined
+
+        this.store.emit({ type: 'HOVER_NODE', nodeId })
+    }
+
+    public clearHover() {
+        if (!this.state.hoveredId) return
+
+        this.state.hoveredId = undefined
         this.store.emit()
     }
 

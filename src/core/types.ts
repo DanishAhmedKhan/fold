@@ -20,4 +20,5 @@ export interface EditorState {
     rootId: string
 
     selectedId?: string
+    hoveredId?: string
 }

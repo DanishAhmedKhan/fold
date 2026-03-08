@@ -1,3 +1,4 @@
+import { dragState } from '../core/DragState'
 import type { Editor } from '../core/Editor'
 
 interface Props {
@@ -12,19 +13,25 @@ export function ElementLibrary({ editor }: Props) {
             <h3>Elements</h3>
 
             {elements.map((el) => (
-                <button
+                <div
                     key={el.type}
+                    draggable
                     style={{
-                        display: 'block',
+                        padding: '8px 10px',
+                        border: '1px solid #ddd',
                         marginBottom: 10,
-                        width: '100%',
+                        cursor: 'grab',
+                        background: '#fff',
                     }}
-                    onClick={() => {
-                        editor.addNode(el.type, editor.state.rootId)
+                    onDragStart={() => {
+                        dragState.type = el.type
+                    }}
+                    onDragEnd={() => {
+                        dragState.type = null
                     }}
                 >
                     {el.name}
-                </button>
+                </div>
             ))}
         </div>
     )
