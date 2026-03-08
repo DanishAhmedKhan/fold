@@ -75,7 +75,7 @@ export class IframeRenderer {
         this.body.appendChild(dom)
     }
 
-    public renderNode(node: EditorNode): HTMLElement {
+    renderNode(node: EditorNode): HTMLElement {
         const element = this.editor.registry.get(node.type)
 
         const el = element ? element.render(this.doc, node) : this.doc.createElement('div')
@@ -85,6 +85,16 @@ export class IframeRenderer {
         this.nodeDomMap.set(node.id, el)
 
         this.applyStyles(el, node)
+
+        el.addEventListener('click', (e) => {
+            e.stopPropagation()
+
+            const id = (e.currentTarget as HTMLElement).dataset.nodeId
+
+            if (id) {
+                this.editor.selectNode(id)
+            }
+        })
 
         node.children.forEach((childId) => {
             const child = this.editor.getNode(childId)
