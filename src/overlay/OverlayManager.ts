@@ -3,10 +3,18 @@ import { IframeRenderer } from '../renderer/IframeRenderer'
 import { defaultOverlayConfig } from './defaultOverlayConfig'
 import type { OverlayConfig } from './OverlatConfig'
 
+type Rect = {
+    left: number
+    top: number
+    width: number
+    height: number
+    right: number
+    bottom: number
+}
+
 export class OverlayManager {
     public editor: Editor
     public renderer: IframeRenderer
-
     public config: OverlayConfig
 
     public overlayRoot!: HTMLElement
@@ -18,12 +26,17 @@ export class OverlayManager {
     public elementLabel!: HTMLElement
     public addButton!: HTMLElement
 
-    public unsubscribe?: () => void
+    private unsubscribe?: () => void
+
+    private rafId: number | null = null
+    private needsUpdate = true
+
+    private resizeObserver!: ResizeObserver
+    private mutationObserver!: MutationObserver
 
     constructor(editor: Editor, renderer: IframeRenderer, config?: Partial<OverlayConfig>) {
         this.editor = editor
         this.renderer = renderer
-
         this.config = { ...defaultOverlayConfig, ...config }
     }
 
@@ -31,8 +44,7 @@ export class OverlayManager {
         this.overlayRoot = container
 
         this.overlayRoot.style.position = 'absolute'
-        this.overlayRoot.style.left = '0'
-        this.overlayRoot.style.top = '0'
+        this.overlayRoot.style.inset = '0'
         this.overlayRoot.style.pointerEvents = 'none'
 
         this.createHoverBox()
@@ -41,10 +53,51 @@ export class OverlayManager {
         this.createElementLabel()
         this.createAddButton()
 
-        this.unsubscribe = this.editor.subscribe(() => this.update())
+        this.unsubscribe = this.editor.subscribe(() => this.requestUpdate())
 
-        window.addEventListener('scroll', () => this.update())
-        window.addEventListener('resize', () => this.update())
+        this.observeLayout()
+        this.startLoop()
+    }
+
+    private startLoop() {
+        const loop = () => {
+            if (this.needsUpdate) {
+                this.update()
+                this.needsUpdate = false
+            }
+
+            this.rafId = requestAnimationFrame(loop)
+        }
+
+        loop()
+    }
+
+    public requestUpdate() {
+        this.needsUpdate = true
+    }
+
+    private observeLayout() {
+        const doc = this.renderer.doc
+
+        doc.addEventListener('scroll', () => this.requestUpdate(), true)
+
+        window.addEventListener('resize', () => this.requestUpdate())
+
+        this.resizeObserver = new ResizeObserver(() => {
+            this.requestUpdate()
+        })
+
+        this.resizeObserver.observe(this.renderer.body)
+
+        this.mutationObserver = new MutationObserver(() => {
+            this.requestUpdate()
+        })
+
+        this.mutationObserver.observe(this.renderer.body, {
+            attributes: true,
+            childList: true,
+            subtree: true,
+        })
     }
 
     public createHoverBox() {
@@ -55,7 +108,6 @@ export class OverlayManager {
         el.style.border = `1px dashed ${this.config.defaultHoverColor}`
 
         this.overlayRoot.appendChild(el)
-
         this.hoverBox = el
     }
 
@@ -67,7 +119,6 @@ export class OverlayManager {
         el.style.border = `2px solid ${this.config.defaultSelectionColor}`
 
         this.overlayRoot.appendChild(el)
-
         this.selectionBox = el
     }
 
@@ -84,7 +135,6 @@ export class OverlayManager {
         bar.style.borderRadius = '4px'
 
         this.overlayRoot.appendChild(bar)
-
         this.actionBar = bar
     }
 
@@ -99,7 +149,6 @@ export class OverlayManager {
         label.style.borderRadius = '3px'
 
         this.overlayRoot.appendChild(label)
-
         this.elementLabel = label
     }
 
@@ -122,7 +171,6 @@ export class OverlayManager {
         btn.style.pointerEvents = 'auto'
 
         this.overlayRoot.appendChild(btn)
-
         this.addButton = btn
     }
 
@@ -131,7 +179,7 @@ export class OverlayManager {
         this.updateSelection()
     }
 
-    public updateHover() {
+    private updateHover() {
         const hovered = this.editor.state.hoveredId
 
         if (!hovered) {
@@ -142,10 +190,9 @@ export class OverlayManager {
         const dom = this.renderer.getDom(hovered)
         if (!dom) return
 
-        const rect = dom.getBoundingClientRect()
+        const rect = this.getAbsoluteRect(dom)
 
         const node = this.editor.getNode(hovered)
-
         const elementConfig = this.config.elements?.[node?.type ?? '']
 
         const color = elementConfig?.hoverColor ?? this.config.defaultHoverColor
@@ -156,7 +203,7 @@ export class OverlayManager {
         this.positionBox(this.hoverBox, rect)
     }
 
-    public updateSelection() {
+    private updateSelection() {
         const selectedIds = this.editor.state.selectedIds
 
         if (!selectedIds || selectedIds.size === 0) {
@@ -172,10 +219,9 @@ export class OverlayManager {
         const dom = this.renderer.getDom(firstId)
         if (!dom) return
 
-        const rect = dom.getBoundingClientRect()
+        const rect = this.getAbsoluteRect(dom)
 
         const node = this.editor.getNode(firstId)
-
         const elementConfig = this.config.elements?.[node?.type ?? '']
 
         const color = elementConfig?.selectionColor ?? this.config.defaultSelectionColor
@@ -196,14 +242,33 @@ export class OverlayManager {
         }
     }
 
-    public positionBox(el: HTMLElement, rect: DOMRect) {
+    private getAbsoluteRect(dom: HTMLElement): Rect {
+        const rect = dom.getBoundingClientRect()
+
+        const iframeRect = this.renderer.iframe.getBoundingClientRect()
+        const overlayRect = this.overlayRoot.getBoundingClientRect()
+
+        const left = iframeRect.left + rect.left - overlayRect.left
+        const top = iframeRect.top + rect.top - overlayRect.top
+
+        return {
+            left,
+            top,
+            width: rect.width,
+            height: rect.height,
+            right: left + rect.width,
+            bottom: top + rect.height,
+        }
+    }
+
+    private positionBox(el: HTMLElement, rect: Rect) {
         el.style.left = rect.left + 'px'
         el.style.top = rect.top + 'px'
         el.style.width = rect.width + 'px'
         el.style.height = rect.height + 'px'
     }
 
-    public positionActionBar(rect: DOMRect) {
+    private positionActionBar(rect: Rect) {
         const placement = this.config.actionBar.placement
 
         let x = rect.left
@@ -234,7 +299,7 @@ export class OverlayManager {
         this.actionBar.style.top = y + 'px'
     }
 
-    public showElementLabel(name: string, rect: DOMRect) {
+    private showElementLabel(name: string, rect: Rect) {
         this.elementLabel.style.display = 'block'
 
         this.elementLabel.textContent = name
@@ -243,10 +308,19 @@ export class OverlayManager {
         this.elementLabel.style.top = rect.top - 18 + 'px'
     }
 
-    public showAddButton(rect: DOMRect) {
+    private showAddButton(rect: Rect) {
         this.addButton.style.display = 'flex'
 
         this.addButton.style.left = rect.left + rect.width / 2 - 9 + 'px'
         this.addButton.style.top = rect.bottom + 'px'
+    }
+
+    public destroy() {
+        this.unsubscribe?.()
+
+        this.resizeObserver?.disconnect()
+        this.mutationObserver?.disconnect()
+
+        if (this.rafId) cancelAnimationFrame(this.rafId)
     }
 }
