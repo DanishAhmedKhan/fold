@@ -9,7 +9,7 @@ export interface EditorNode {
     parent: string | null
     children: string[]
 
-    props: Record<string, unknown>
+    props: Record<string, string>
 
     styles: NodeStyles
 }

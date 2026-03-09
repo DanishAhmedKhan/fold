@@ -4,21 +4,21 @@ import { defaultOverlayConfig } from './defaultOverlayConfig'
 import type { OverlayConfig } from './OverlatConfig'
 
 export class OverlayManager {
-    editor: Editor
-    renderer: IframeRenderer
+    public editor: Editor
+    public renderer: IframeRenderer
 
-    config: OverlayConfig
+    public config: OverlayConfig
 
-    overlayRoot!: HTMLElement
+    public overlayRoot!: HTMLElement
 
-    hoverBox!: HTMLElement
-    selectionBox!: HTMLElement
+    public hoverBox!: HTMLElement
+    public selectionBox!: HTMLElement
 
-    actionBar!: HTMLElement
-    elementLabel!: HTMLElement
-    addButton!: HTMLElement
+    public actionBar!: HTMLElement
+    public elementLabel!: HTMLElement
+    public addButton!: HTMLElement
 
-    unsubscribe?: () => void
+    public unsubscribe?: () => void
 
     constructor(editor: Editor, renderer: IframeRenderer, config?: Partial<OverlayConfig>) {
         this.editor = editor
@@ -27,7 +27,7 @@ export class OverlayManager {
         this.config = { ...defaultOverlayConfig, ...config }
     }
 
-    mount(container: HTMLElement) {
+    public mount(container: HTMLElement) {
         this.overlayRoot = container
 
         this.overlayRoot.style.position = 'absolute'
@@ -47,7 +47,7 @@ export class OverlayManager {
         window.addEventListener('resize', () => this.update())
     }
 
-    createHoverBox() {
+    public createHoverBox() {
         const el = document.createElement('div')
 
         el.style.position = 'absolute'
@@ -59,7 +59,7 @@ export class OverlayManager {
         this.hoverBox = el
     }
 
-    createSelectionBox() {
+    public createSelectionBox() {
         const el = document.createElement('div')
 
         el.style.position = 'absolute'
@@ -71,7 +71,7 @@ export class OverlayManager {
         this.selectionBox = el
     }
 
-    createActionBar() {
+    public createActionBar() {
         const bar = document.createElement('div')
 
         bar.style.position = 'absolute'
@@ -88,7 +88,7 @@ export class OverlayManager {
         this.actionBar = bar
     }
 
-    createElementLabel() {
+    public createElementLabel() {
         const label = document.createElement('div')
 
         label.style.position = 'absolute'
@@ -103,7 +103,7 @@ export class OverlayManager {
         this.elementLabel = label
     }
 
-    createAddButton() {
+    public createAddButton() {
         const btn = document.createElement('div')
 
         btn.textContent = '+'
@@ -126,12 +126,12 @@ export class OverlayManager {
         this.addButton = btn
     }
 
-    update() {
+    public update() {
         this.updateHover()
         this.updateSelection()
     }
 
-    updateHover() {
+    public updateHover() {
         const hovered = this.editor.state.hoveredId
 
         if (!hovered) {
@@ -156,10 +156,10 @@ export class OverlayManager {
         this.positionBox(this.hoverBox, rect)
     }
 
-    updateSelection() {
-        const selected = this.editor.state.selectedId
+    public updateSelection() {
+        const selectedIds = this.editor.state.selectedIds
 
-        if (!selected) {
+        if (!selectedIds || selectedIds.size === 0) {
             this.selectionBox.style.display = 'none'
             this.actionBar.style.display = 'none'
             this.elementLabel.style.display = 'none'
@@ -167,12 +167,14 @@ export class OverlayManager {
             return
         }
 
-        const dom = this.renderer.getDom(selected)
+        const firstId = [...selectedIds][0]
+
+        const dom = this.renderer.getDom(firstId)
         if (!dom) return
 
         const rect = dom.getBoundingClientRect()
 
-        const node = this.editor.getNode(selected)
+        const node = this.editor.getNode(firstId)
 
         const elementConfig = this.config.elements?.[node?.type ?? '']
 
@@ -194,14 +196,14 @@ export class OverlayManager {
         }
     }
 
-    positionBox(el: HTMLElement, rect: DOMRect) {
+    public positionBox(el: HTMLElement, rect: DOMRect) {
         el.style.left = rect.left + 'px'
         el.style.top = rect.top + 'px'
         el.style.width = rect.width + 'px'
         el.style.height = rect.height + 'px'
     }
 
-    positionActionBar(rect: DOMRect) {
+    public positionActionBar(rect: DOMRect) {
         const placement = this.config.actionBar.placement
 
         let x = rect.left
@@ -232,7 +234,7 @@ export class OverlayManager {
         this.actionBar.style.top = y + 'px'
     }
 
-    showElementLabel(name: string, rect: DOMRect) {
+    public showElementLabel(name: string, rect: DOMRect) {
         this.elementLabel.style.display = 'block'
 
         this.elementLabel.textContent = name
@@ -241,7 +243,7 @@ export class OverlayManager {
         this.elementLabel.style.top = rect.top - 18 + 'px'
     }
 
-    showAddButton(rect: DOMRect) {
+    public showAddButton(rect: DOMRect) {
         this.addButton.style.display = 'flex'
 
         this.addButton.style.left = rect.left + rect.width / 2 - 9 + 'px'

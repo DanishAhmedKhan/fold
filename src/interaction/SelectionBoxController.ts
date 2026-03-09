@@ -13,7 +13,7 @@ export class SelectionBoxController {
         this.editor = editor
     }
 
-    mount(doc: Document) {
+    public mount(doc: Document) {
         this.doc = doc
 
         this.box = document.createElement('div')
@@ -35,7 +35,7 @@ export class SelectionBoxController {
         doc.addEventListener('mouseup', this.onMouseUp)
     }
 
-    destroy() {
+    public destroy() {
         this.doc.removeEventListener('mousedown', this.onMouseDown)
         this.doc.removeEventListener('mousemove', this.onMouseMove)
         this.doc.removeEventListener('mouseup', this.onMouseUp)
@@ -51,6 +51,7 @@ export class SelectionBoxController {
         this.startX = e.clientX
         this.startY = e.clientY
 
+        console.log('mouse down')
         this.box.style.display = 'block'
         this.box.style.left = `${this.startX}px`
         this.box.style.top = `${this.startY}px`
