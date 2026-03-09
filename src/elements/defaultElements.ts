@@ -63,7 +63,7 @@ export const BoxElement: EditorElement = {
     create() {
         return {
             styles: {
-                padding: '40px',
+                padding: '100px',
                 border: '1px solid #eee',
             },
         }

@@ -62,15 +62,6 @@ export class IframeRenderer {
                 case 'UPDATE_STYLE':
                     this.updateNodeStyles(patch.nodeId)
                     break
-
-                case 'SELECT_NODE':
-                case 'SELECT_NODES':
-                case 'TOGGLE_NODE_SELECTION':
-                case 'CLEAR_SELECTION':
-                    break
-
-                case 'HOVER_NODE':
-                    break
             }
         })
     }
@@ -78,10 +69,13 @@ export class IframeRenderer {
     public renderInitialTree() {
         this.body.innerHTML = ''
 
+        this.nodeDomMap.clear()
+
         const root = this.editor.getNode(this.editor.state.rootId)
         if (!root) return
 
         const dom = this.renderNode(root)
+
         this.body.appendChild(dom)
     }
 
@@ -89,6 +83,7 @@ export class IframeRenderer {
         const element = this.editor.registry.get(node.type)
 
         const el = element ? element.render(this.doc, node) : this.doc.createElement('div')
+
         el.dataset.nodeId = node.id
 
         this.nodeDomMap.set(node.id, el)
@@ -114,6 +109,7 @@ export class IframeRenderer {
         if (!parentDom) return
 
         const dom = this.renderNode(node)
+
         parentDom.appendChild(dom)
     }
 
@@ -122,6 +118,7 @@ export class IframeRenderer {
         if (!dom) return
 
         dom.remove()
+
         this.nodeDomMap.delete(nodeId)
     }
 
@@ -159,7 +156,7 @@ export class IframeRenderer {
     }
 
     public getDom(nodeId: string) {
-        return this.nodeDomMap.get(nodeId)
+        return this.nodeDomMap.get(nodeId) ?? null
     }
 
     public destroy() {

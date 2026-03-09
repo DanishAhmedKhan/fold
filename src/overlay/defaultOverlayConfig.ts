@@ -1,15 +1,15 @@
 import type { OverlayConfig } from './OverlatConfig'
 
 export const defaultOverlayConfig: OverlayConfig = {
-    defaultHoverColor: '#999',
-    defaultSelectionColor: '#3b82f6',
+    defaultHoverColor: 'red',
+    defaultSelectionColor: 'green',
 
     elements: {},
 
     actionBar: {
         orientation: 'horizontal',
         placement: 'top-right',
-        inside: false,
+        inside: true,
     },
 
     showElementName: true,

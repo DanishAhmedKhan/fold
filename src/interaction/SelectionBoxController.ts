@@ -5,8 +5,11 @@ export class SelectionBoxController {
     private doc!: Document
 
     private dragging = false
+    private pending = false
+
     private startX = 0
     private startY = 0
+
     private box!: HTMLDivElement
 
     constructor(editor: Editor) {
@@ -16,50 +19,64 @@ export class SelectionBoxController {
     public mount(doc: Document) {
         this.doc = doc
 
-        this.box = document.createElement('div')
+        this.box = this.doc.createElement('div')
         this.box.id = 'selection-box'
 
         Object.assign(this.box.style, {
             position: 'absolute',
-            border: '1px dashed #3b82f6',
+            border: '1px dashed red',
             background: 'rgba(59,130,246,0.1)',
             pointerEvents: 'none',
             display: 'none',
             zIndex: '9999',
         })
 
-        document.body.appendChild(this.box)
+        this.doc.body.appendChild(this.box)
 
-        doc.addEventListener('mousedown', this.onMouseDown)
-        doc.addEventListener('mousemove', this.onMouseMove)
-        doc.addEventListener('mouseup', this.onMouseUp)
+        this.doc.addEventListener('mousedown', this.onMouseDown)
+        this.doc.addEventListener('mousemove', this.onMouseMove)
+        this.doc.addEventListener('mouseup', this.onMouseUp)
     }
 
     public destroy() {
         this.doc.removeEventListener('mousedown', this.onMouseDown)
         this.doc.removeEventListener('mousemove', this.onMouseMove)
         this.doc.removeEventListener('mouseup', this.onMouseUp)
+
+        this.box.remove()
     }
 
     private onMouseDown = (e: MouseEvent) => {
+        if (e.button !== 0) return
+
         const target = e.target as HTMLElement
 
+        // Ignore clicks on nodes (handled by click selection)
         if (target.closest('[data-node-id]')) return
 
-        this.dragging = true
+        e.preventDefault()
 
+        this.pending = true
         this.startX = e.clientX
         this.startY = e.clientY
-
-        console.log('mouse down')
-        this.box.style.display = 'block'
-        this.box.style.left = `${this.startX}px`
-        this.box.style.top = `${this.startY}px`
-        this.box.style.width = '0px'
-        this.box.style.height = '0px'
     }
 
     private onMouseMove = (e: MouseEvent) => {
+        if (!this.pending && !this.dragging) return
+
+        const dx = Math.abs(e.clientX - this.startX)
+        const dy = Math.abs(e.clientY - this.startY)
+
+        // Start drag only after small threshold
+        if (this.pending) {
+            if (dx < 3 && dy < 3) return
+
+            this.pending = false
+            this.dragging = true
+
+            this.box.style.display = 'block'
+        }
+
         if (!this.dragging) return
 
         const x = Math.min(e.clientX, this.startX)
@@ -74,9 +91,15 @@ export class SelectionBoxController {
         this.box.style.height = `${h}px`
     }
 
-    private onMouseUp = () => {
-        if (!this.dragging) return
+    private onMouseUp = (e: MouseEvent) => {
+        if (!this.dragging && !this.pending) return
+
+        const wasDragging = this.dragging
+
+        this.pending = false
         this.dragging = false
+
+        if (!wasDragging) return
 
         const boxRect = this.box.getBoundingClientRect()
 
@@ -99,7 +122,13 @@ export class SelectionBoxController {
             }
         }
 
-        this.editor.selectMultiple(selected)
+        if (selected.length === 0) {
+            this.editor.clearSelection()
+        } else if (e.shiftKey) {
+            this.editor.addToSelection(selected)
+        } else {
+            this.editor.selectMultiple(selected)
+        }
 
         this.box.style.display = 'none'
     }
