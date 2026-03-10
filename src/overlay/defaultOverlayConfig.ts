@@ -1,40 +1,83 @@
 import type { OverlayConfig } from './OverlatConfig'
 
 export const defaultOverlayConfig: OverlayConfig = {
-    defaultHoverColor: 'red',
-    defaultSelectionColor: 'green',
+    defaultHoverColor: '#999',
 
-    elements: {},
+    defaultSelectionColor: '#3b82f6',
 
-    actionBar: {
-        position: 'top',
-        align: 'end',
-        offset: 'outside',
-        gap: 0,
+    bars: [
+        {
+            id: 'actions',
 
-        actions: [
-            {
-                id: 'duplicate',
-                icon: '⧉',
-                tooltip: 'Duplicate',
+            position: 'top',
+            align: 'end',
+            offset: 'outside',
 
-                onClick(editor, nodeId) {
-                    editor.duplicateNode(nodeId)
+            orientation: 'horizontal',
+
+            gap: 6,
+
+            flipMode: 'both',
+
+            actions: [
+                {
+                    id: 'move',
+                    icon: '⋮⋮',
+                    tooltip: 'Drag',
                 },
-            },
 
-            {
-                id: 'delete',
-                icon: '🗑',
-                tooltip: 'Delete',
-
-                onClick(editor, nodeId) {
-                    editor.removeNode(nodeId)
+                {
+                    id: 'duplicate',
+                    icon: '⧉',
+                    tooltip: 'Duplicate',
                 },
-            },
-        ],
-    },
 
-    showElementName: true,
-    showAddButton: true,
+                {
+                    id: 'delete',
+                    icon: '🗑',
+                    tooltip: 'Delete',
+                    onClick: (editor, nodeId) => {
+                        // editor.delete(nodeId)
+                    },
+                },
+            ],
+        },
+
+        {
+            id: 'label',
+
+            position: 'top',
+            align: 'start',
+            offset: 'outside',
+
+            orientation: 'horizontal',
+
+            flipMode: 'offset',
+
+            actions: [
+                {
+                    id: 'element-label',
+                    label: 'Element',
+                },
+            ],
+        },
+
+        {
+            id: 'add',
+
+            position: 'bottom',
+            align: 'center',
+            offset: 'outside',
+
+            orientation: 'horizontal',
+
+            actions: [
+                {
+                    id: 'add',
+                    icon: '+',
+                    tooltip: 'Add Element',
+                },
+            ],
+        },
+    ],
 }

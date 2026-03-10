@@ -4,9 +4,7 @@ export class OverlayRenderer {
     constructor(
         private hoverBox: HTMLElement,
         private selectionBox: HTMLElement,
-        private actionBar: HTMLElement,
-        private elementLabel: HTMLElement,
-        private addButton: HTMLElement,
+        private barElements: Map<string, HTMLElement>,
     ) {}
 
     public render(layout: OverlayLayout) {
@@ -22,31 +20,17 @@ export class OverlayRenderer {
             this.selectionBox.style.display = 'none'
         }
 
-        if (layout.actionBar) {
-            this.actionBar.style.display = 'flex'
-            this.actionBar.style.left = layout.actionBar.x + 'px'
-            this.actionBar.style.top = layout.actionBar.y + 'px'
-        } else {
-            this.actionBar.style.display = 'none'
-        }
+        for (const [id, el] of this.barElements) {
+            const bar = layout.bars.find((b) => b.id === id)
 
-        if (layout.label) {
-            this.elementLabel.style.display = 'block'
-            this.elementLabel.textContent = layout.label.text
-            this.elementLabel.style.left = layout.label.rect.left + 'px'
-            this.elementLabel.style.top = layout.label.rect.top - 20 + 'px'
-        } else {
-            this.elementLabel.style.display = 'none'
-        }
+            if (!bar) {
+                el.style.display = 'none'
+                continue
+            }
 
-        if (layout.addButton) {
-            const rect = layout.addButton
-
-            this.addButton.style.display = 'flex'
-            this.addButton.style.left = rect.left + rect.width / 2 - 9 + 'px'
-            this.addButton.style.top = rect.bottom - 9 + 'px'
-        } else {
-            this.addButton.style.display = 'none'
+            el.style.display = 'flex'
+            el.style.left = bar.x + 'px'
+            el.style.top = bar.y + 'px'
         }
     }
 

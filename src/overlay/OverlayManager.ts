@@ -1,7 +1,8 @@
 import { Editor } from '../core/Editor'
 import { IframeRenderer } from '../renderer/IframeRenderer'
+
 import { defaultOverlayConfig } from './defaultOverlayConfig'
-import type { OverlayConfig } from './OverlatConfig'
+import type { OverlayAction, OverlayConfig } from './OverlatConfig'
 
 import { OverlayLayoutEngine } from './OverlayLayoutEngine'
 import { OverlayRenderer } from './OverlayRenderer'
@@ -11,9 +12,8 @@ export class OverlayManager {
 
     public hoverBox!: HTMLElement
     public selectionBox!: HTMLElement
-    public actionBar!: HTMLElement
-    public elementLabel!: HTMLElement
-    public addButton!: HTMLElement
+
+    private bars = new Map<string, HTMLElement>()
 
     private layout!: OverlayLayoutEngine
     private rendererUI!: OverlayRenderer
@@ -25,7 +25,7 @@ export class OverlayManager {
     private resizeObserver!: ResizeObserver
     private mutationObserver!: MutationObserver
 
-    private lastActionNode?: string
+    private lastNode?: string
 
     constructor(
         public editor: Editor,
@@ -40,22 +40,63 @@ export class OverlayManager {
         this.overlayRoot.style.inset = '0'
         this.overlayRoot.style.pointerEvents = 'none'
 
-        this.createElements()
+        this.createBoxes()
+        this.createBars()
 
-        this.layout = new OverlayLayoutEngine(this.editor, this.renderer, this.config, this.overlayRoot, this.actionBar)
+        this.layout = new OverlayLayoutEngine(this.editor, this.renderer, this.config, this.overlayRoot, this.bars)
 
-        this.rendererUI = new OverlayRenderer(
-            this.hoverBox,
-            this.selectionBox,
-            this.actionBar,
-            this.elementLabel,
-            this.addButton,
-        )
+        this.rendererUI = new OverlayRenderer(this.hoverBox, this.selectionBox, this.bars)
 
         this.unsubscribe = this.editor.subscribe(() => this.requestUpdate())
 
         this.observeLayout()
         this.startLoop()
+    }
+
+    private createBoxes() {
+        const create = () => {
+            const el = document.createElement('div')
+            el.style.position = 'absolute'
+            el.style.pointerEvents = 'none'
+            this.overlayRoot.appendChild(el)
+            return el
+        }
+
+        this.hoverBox = create()
+        this.selectionBox = create()
+
+        this.hoverBox.style.border = '1px dashed #999'
+        this.selectionBox.style.border = '2px solid #3b82f6'
+    }
+
+    private createBars() {
+        for (const bar of this.config.bars) {
+            const el = document.createElement('div')
+
+            el.style.position = 'absolute'
+            el.style.pointerEvents = 'auto'
+            el.style.display = 'none'
+
+            el.style.background = 'rgb(59,130,246)'
+            el.style.color = 'white'
+
+            el.style.padding = '2px 6px'
+            el.style.gap = '4px'
+
+            el.style.borderRadius = '4px'
+            el.style.fontSize = '12px'
+
+            if (bar.orientation === 'vertical') {
+                el.style.flexDirection = 'column'
+                el.style.display = 'flex'
+            } else {
+                el.style.flexDirection = 'row'
+            }
+
+            this.overlayRoot.appendChild(el)
+
+            this.bars.set(bar.id, el)
+        }
     }
 
     private startLoop() {
@@ -64,18 +105,19 @@ export class OverlayManager {
                 const selectedIds = this.editor.state.selectedIds
 
                 if (selectedIds && selectedIds.size > 0) {
-                    const id = [...selectedIds][0]
+                    const nodeId = [...selectedIds][0]
 
-                    if (id !== this.lastActionNode) {
-                        this.renderActions(id)
-                        this.lastActionNode = id
+                    if (nodeId !== this.lastNode) {
+                        this.renderBarActions(nodeId)
 
-                        this.actionBar.getBoundingClientRect()
+                        this.lastNode = nodeId
                     }
                 }
 
                 const layout = this.layout.compute()
+
                 this.rendererUI.render(layout)
+
                 this.needsUpdate = false
             }
 
@@ -83,6 +125,54 @@ export class OverlayManager {
         }
 
         loop()
+    }
+
+    private renderBarActions(nodeId: string) {
+        for (const barConfig of this.config.bars) {
+            const el = this.bars.get(barConfig.id)!
+            const actions = barConfig.actions ?? []
+
+            el.innerHTML = ''
+
+            actions.forEach((action) => {
+                const btn = this.createActionElement(action, nodeId)
+
+                el.appendChild(btn)
+            })
+        }
+    }
+
+    private createActionElement(action: OverlayAction, nodeId: string) {
+        const btn = document.createElement('button')
+
+        btn.style.background = 'transparent'
+        btn.style.border = 'none'
+        btn.style.color = 'white'
+        btn.style.cursor = 'pointer'
+        btn.style.fontSize = '12px'
+        btn.style.padding = '2px'
+
+        if (action.icon) {
+            if (typeof action.icon === 'string') {
+                btn.textContent = action.icon
+            } else {
+                btn.appendChild(action.icon)
+            }
+        } else if (action.label) {
+            btn.textContent = action.label
+        }
+
+        if (action.tooltip) {
+            btn.title = action.tooltip
+        }
+
+        btn.onclick = (e) => {
+            e.stopPropagation()
+
+            action.onClick?.(this.editor, nodeId)
+        }
+
+        return btn
     }
 
     public requestUpdate() {
@@ -105,85 +195,6 @@ export class OverlayManager {
             attributes: true,
             childList: true,
             subtree: true,
-        })
-    }
-
-    private createElements() {
-        const create = () => {
-            const el = document.createElement('div')
-            el.style.position = 'absolute'
-            el.style.pointerEvents = 'none'
-            this.overlayRoot.appendChild(el)
-            return el
-        }
-
-        this.hoverBox = create()
-        this.selectionBox = create()
-
-        this.hoverBox.style.border = '1px dashed #999'
-        this.selectionBox.style.border = '2px solid #3b82f6'
-
-        this.actionBar = document.createElement('div')
-        this.actionBar.style.position = 'absolute'
-        this.actionBar.style.display = 'none'
-        this.actionBar.style.pointerEvents = 'auto'
-        this.actionBar.style.background = 'rgb(59, 130, 246)'
-        this.actionBar.style.padding = '2px 6px'
-        this.actionBar.style.gap = '4px'
-        this.actionBar.style.color = 'white'
-
-        this.overlayRoot.appendChild(this.actionBar)
-
-        this.elementLabel = create()
-        this.addButton = create()
-
-        this.addButton.style.width = '18px'
-        this.addButton.style.height = '18px'
-        this.addButton.style.color = 'white'
-        this.addButton.style.background = 'rgb(59, 130, 246)'
-        this.addButton.style.borderRadius = '50%'
-        this.addButton.style.alignItems = 'center'
-        this.addButton.style.justifyContent = 'center'
-        this.addButton.style.cursor = 'pointer'
-        this.addButton.style.pointerEvents = 'auto'
-        this.addButton.textContent = '+'
-
-        this.elementLabel.style.background = 'rgb(59, 130, 246)'
-        this.elementLabel.style.padding = '1px 5px'
-        this.elementLabel.style.color = 'white'
-    }
-
-    private renderActions(nodeId: string) {
-        const actions = this.config.actionBar.actions
-
-        this.actionBar.innerHTML = ''
-
-        actions.forEach((action) => {
-            const btn = document.createElement('button')
-
-            btn.style.background = 'transparent'
-            btn.style.border = 'none'
-            btn.style.color = 'white'
-            btn.style.cursor = 'pointer'
-            btn.style.fontSize = '12px'
-            btn.style.padding = '2px'
-
-            if (typeof action.icon === 'string') {
-                btn.textContent = action.icon
-            } else {
-                btn.appendChild(action.icon)
-            }
-
-            if (action.tooltip) {
-                btn.title = action.tooltip
-            }
-
-            btn.onclick = (e) => {
-                e.stopPropagation()
-                action.onClick(this.editor, nodeId)
-            }
-
-            this.actionBar.appendChild(btn)
         })
     }
 

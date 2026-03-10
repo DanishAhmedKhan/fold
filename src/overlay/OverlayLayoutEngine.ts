@@ -1,7 +1,7 @@
 import { Editor } from '../core/Editor'
 import { IframeRenderer } from '../renderer/IframeRenderer'
-import type { OverlayConfig } from './OverlatConfig'
-import type { OverlayLayout, Position, Rect } from './OverlayTypes'
+import type { OverlayBarConfig, OverlayConfig, Position } from './OverlatConfig'
+import type { OverlayLayout, Rect } from './OverlayTypes'
 
 export class OverlayLayoutEngine {
     constructor(
@@ -9,11 +9,11 @@ export class OverlayLayoutEngine {
         private renderer: IframeRenderer,
         private config: OverlayConfig,
         private overlayRoot: HTMLElement,
-        private actionBar: HTMLElement,
+        private barElements: Map<string, HTMLElement>,
     ) {}
 
     public compute(): OverlayLayout {
-        const layout: OverlayLayout = {}
+        const layout: OverlayLayout = { bars: [] }
 
         const hovered = this.editor.state.hoveredId
 
@@ -24,29 +24,127 @@ export class OverlayLayoutEngine {
 
         const selectedIds = this.editor.state.selectedIds
 
-        if (selectedIds && selectedIds.size > 0) {
-            const id = [...selectedIds][0]
+        if (!selectedIds || selectedIds.size === 0) return layout
 
-            const dom = this.renderer.getDom(id)
-            if (!dom) return layout
+        const id = [...selectedIds][0]
 
-            const rect = this.getAbsoluteRect(dom)
+        const dom = this.renderer.getDom(id)
+        if (!dom) return layout
 
-            layout.selectionRect = rect
+        const rect = this.getAbsoluteRect(dom)
 
-            layout.actionBar = this.computeActionBar(rect)
+        layout.selectionRect = rect
 
-            if (this.config.showElementName) {
-                const node = this.editor.getNode(id)
-                layout.label = { text: node?.type ?? '', rect }
-            }
-
-            if (this.config.showAddButton) {
-                layout.addButton = rect
-            }
+        for (const bar of this.config.bars) {
+            const pos = this.computeBar(bar, rect)
+            layout.bars.push({ id: bar.id, x: pos.x, y: pos.y })
         }
 
         return layout
+    }
+
+    private computeBar(bar: OverlayBarConfig, rect: Rect) {
+        const el = this.barElements.get(bar.id)!
+        const canvas = this.overlayRoot.getBoundingClientRect()
+
+        let position = bar.position
+
+        let result = this.computePosition(bar, rect, el, position)
+
+        const overflow = this.isOverflow(result, canvas)
+
+        if (overflow) {
+            const mode = bar.flipMode ?? 'side'
+
+            if (mode === 'offset' || mode === 'both') {
+                const flippedOffset = bar.offset === 'inside' ? 'outside' : 'inside'
+
+                const attempt = this.computePosition({ ...bar, offset: flippedOffset }, rect, el, position)
+
+                if (!this.isOverflow(attempt, canvas)) {
+                    result = attempt
+                }
+            }
+
+            if ((mode === 'side' || mode === 'both') && this.isOverflow(result, canvas)) {
+                position = this.flip(position)
+                result = this.computePosition(bar, rect, el, position)
+            }
+        }
+
+        result.x = this.clamp(result.x, 0, canvas.width - result.width)
+        result.y = this.clamp(result.y, 0, canvas.height - result.height)
+
+        return result
+    }
+
+    private computePosition(bar: OverlayBarConfig, rect: Rect, el: HTMLElement, position: Position) {
+        const { align, offset, gap = 6 } = bar
+
+        const prev = el.style.display
+
+        if (prev === 'none') {
+            el.style.visibility = 'hidden'
+            el.style.display = 'flex'
+        }
+
+        const size = el.getBoundingClientRect()
+
+        el.style.display = prev
+        el.style.visibility = ''
+
+        let x = 0
+        let y = 0
+
+        if (position === 'top' || position === 'bottom') {
+            if (align === 'start') x = rect.left
+            if (align === 'center') x = rect.left + rect.width / 2 - size.width / 2
+            if (align === 'end') x = rect.right - size.width
+
+            if (position === 'top') {
+                y = offset === 'inside' ? rect.top + gap : rect.top - size.height - gap
+            }
+
+            if (position === 'bottom') {
+                y = offset === 'inside' ? rect.bottom - size.height - gap : rect.bottom + gap
+            }
+        }
+
+        if (position === 'left' || position === 'right') {
+            if (align === 'start') y = rect.top
+            if (align === 'center') y = rect.top + rect.height / 2 - size.height / 2
+            if (align === 'end') y = rect.bottom - size.height
+
+            if (position === 'left') {
+                x = offset === 'inside' ? rect.left + gap : rect.left - size.width - gap
+            }
+
+            if (position === 'right') {
+                x = offset === 'inside' ? rect.right - size.width - gap : rect.right + gap
+            }
+        }
+
+        return { x, y, width: size.width, height: size.height }
+    }
+
+    private flip(pos: Position): Position {
+        if (pos === 'top') return 'bottom'
+        if (pos === 'bottom') return 'top'
+        if (pos === 'left') return 'right'
+        return 'left'
+    }
+
+    private isOverflow(result: any, canvas: DOMRect) {
+        return (
+            result.x < 0 ||
+            result.y < 0 ||
+            result.x + result.width > canvas.width ||
+            result.y + result.height > canvas.height
+        )
+    }
+
+    private clamp(x: number, min: number, max: number) {
+        return Math.max(min, Math.min(max, x))
     }
 
     private getAbsoluteRect(dom: HTMLElement): Rect {
@@ -66,90 +164,5 @@ export class OverlayLayoutEngine {
             right: left + rect.width,
             bottom: top + rect.height,
         }
-    }
-
-    private computeActionBar(rect: Rect) {
-        const canvas = this.overlayRoot.getBoundingClientRect()
-
-        let position = this.config.actionBar.position as Position
-
-        let result = this.computePosition(rect, position)
-
-        const overflow =
-            result.x < 0 ||
-            result.y < 0 ||
-            result.x + result.width > canvas.width ||
-            result.y + result.height > canvas.height
-
-        if (overflow) {
-            position = this.flip(position)
-            result = this.computePosition(rect, position)
-        }
-
-        result.x = this.clamp(result.x, 0, canvas.width - result.width)
-        result.y = this.clamp(result.y, 0, canvas.height - result.height)
-
-        return { x: result.x, y: result.y }
-    }
-
-    private computePosition(rect: Rect, position: Position) {
-        const { align, offset, gap = 6 } = this.config.actionBar
-
-        const prevDisplay = this.actionBar.style.display
-
-        if (prevDisplay === 'none') {
-            this.actionBar.style.visibility = 'hidden'
-            this.actionBar.style.display = 'flex'
-        }
-
-        const barRect = this.actionBar.getBoundingClientRect()
-
-        this.actionBar.style.display = prevDisplay
-        this.actionBar.style.visibility = ''
-
-        let x = 0
-        let y = 0
-
-        if (position === 'top' || position === 'bottom') {
-            if (align === 'start') x = rect.left
-            if (align === 'center') x = rect.left + rect.width / 2 - barRect.width / 2
-            if (align === 'end') x = rect.right - barRect.width
-
-            if (position === 'top') {
-                y = offset === 'inside' ? rect.top + gap : rect.top - barRect.height - gap
-            }
-
-            if (position === 'bottom') {
-                y = offset === 'inside' ? rect.bottom - barRect.height - gap : rect.bottom + gap
-            }
-        }
-
-        if (position === 'left' || position === 'right') {
-            if (align === 'start') y = rect.top
-            if (align === 'center') y = rect.top + rect.height / 2 - barRect.height / 2
-            if (align === 'end') y = rect.bottom - barRect.height
-
-            if (position === 'left') {
-                x = offset === 'inside' ? rect.left + gap : rect.left - barRect.width - gap
-            }
-
-            if (position === 'right') {
-                x = offset === 'inside' ? rect.right - barRect.width - gap : rect.right + gap
-            }
-        }
-
-        return { x, y, width: barRect.width, height: barRect.height }
-    }
-
-    private flip(pos: Position): Position {
-        if (pos === 'top') return 'bottom'
-        if (pos === 'bottom') return 'top'
-        if (pos === 'left') return 'right'
-
-        return 'left'
-    }
-
-    private clamp(x: number, min: number, max: number) {
-        return Math.max(min, Math.min(max, x))
     }
 }
