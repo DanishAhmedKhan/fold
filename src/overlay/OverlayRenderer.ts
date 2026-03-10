@@ -34,7 +34,7 @@ export class OverlayRenderer {
             this.elementLabel.style.display = 'block'
             this.elementLabel.textContent = layout.label.text
             this.elementLabel.style.left = layout.label.rect.left + 'px'
-            this.elementLabel.style.top = layout.label.rect.top - 18 + 'px'
+            this.elementLabel.style.top = layout.label.rect.top - 20 + 'px'
         } else {
             this.elementLabel.style.display = 'none'
         }
@@ -44,7 +44,7 @@ export class OverlayRenderer {
 
             this.addButton.style.display = 'flex'
             this.addButton.style.left = rect.left + rect.width / 2 - 9 + 'px'
-            this.addButton.style.top = rect.bottom - 8 + 'px'
+            this.addButton.style.top = rect.bottom - 9 + 'px'
         } else {
             this.addButton.style.display = 'none'
         }
