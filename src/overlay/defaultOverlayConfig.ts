@@ -15,7 +15,7 @@ export const defaultOverlayConfig: OverlayConfig = {
 
             orientation: 'horizontal',
 
-            gap: 6,
+            // gap: 6,
 
             flipMode: 'both',
 

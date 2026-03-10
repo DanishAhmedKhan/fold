@@ -182,4 +182,27 @@ export class Editor {
     public registerElement(element: EditorElement) {
         this.registry.register(element)
     }
+
+    public setDevice(device: 'desktop' | 'tablet' | 'mobile') {
+        const widths = {
+            desktop: 1280,
+            tablet: 768,
+            mobile: 375,
+        }
+
+        this.state.viewport.device = device
+        this.state.viewport.width = widths[device]
+
+        // this.store.emit({ type: 'SET_DEVICE', device })
+    }
+
+    public setResponsiveMode() {
+        this.state.viewport.device = 'responsive'
+        // this.store.emit({ type: 'SET_DEVICE', device: 'responsive' })
+    }
+
+    public setCanvasWidth(width: number) {
+        this.state.viewport.width = width
+        // this.store.emit({ type: 'SET_CANVAS_WIDTH', width })
+    }
 }

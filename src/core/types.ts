@@ -14,12 +14,18 @@ export interface EditorNode {
     styles: NodeStyles
 }
 
+export interface EditorViewport {
+    device: 'desktop' | 'tablet' | 'mobile' | 'responsive'
+    width: number
+}
+
 export interface EditorState {
     nodes: Record<string, EditorNode>
 
     rootId: string
 
-    // selectedId?: string
     selectedIds: Set<string>
     hoveredId?: string
+
+    viewport: EditorViewport
 }

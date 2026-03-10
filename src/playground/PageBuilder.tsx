@@ -3,6 +3,7 @@ import { BoxElement, ButtonElement, TextElement } from '../elements/defaultEleme
 import { Editor } from '../core/Editor'
 import { ElementLibrary } from '../react/ElementLibrary'
 import { Canvas } from '../react/Canvas'
+import { Responsive } from '../react/Responsive'
 
 export interface EditorProps {
     schema?: unknown
@@ -43,7 +44,7 @@ export const PageBuilder: React.FC<EditorProps> = () => {
                     padding: '0 16px',
                 }}
             >
-                {/* Responsive */}
+                <Responsive editor={editor} />
             </div>
 
             <div style={{ display: 'flex', flex: 1 }}>

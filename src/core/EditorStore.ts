@@ -22,6 +22,11 @@ export class EditorStore {
                 },
             },
             selectedIds: new Set<string>(),
+
+            viewport: {
+                device: 'desktop',
+                width: 1280,
+            },
         }
     }
 

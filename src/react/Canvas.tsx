@@ -7,6 +7,8 @@ export function Canvas({ editor }: { editor: Editor }) {
     const iframeRef = useRef<HTMLIFrameElement>(null)
     const overlayRef = useRef<HTMLDivElement>(null)
 
+    const width = editor.state.viewport.width
+
     useEffect(() => {
         const renderer = new IframeRenderer(editor)
         renderer.mount(iframeRef.current!)
@@ -18,8 +20,10 @@ export function Canvas({ editor }: { editor: Editor }) {
     return (
         <div
             style={{
+                width,
                 position: 'relative',
                 flex: 1,
+                overflow: 'hidden',
             }}
         >
             <iframe
