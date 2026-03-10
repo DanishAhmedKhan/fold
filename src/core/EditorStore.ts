@@ -32,9 +32,11 @@ export class EditorStore {
 
     public subscribe(fn: (patch: EditorPatch) => void) {
         this.listeners.add(fn)
-        return () => this.listeners.delete(fn)
-    }
 
+        return () => {
+            this.listeners.delete(fn)
+        }
+    }
     public emit(patch: EditorPatch) {
         this.listeners.forEach((l) => l(patch))
     }

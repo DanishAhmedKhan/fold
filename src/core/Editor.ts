@@ -184,6 +184,8 @@ export class Editor {
     }
 
     public setDevice(device: 'desktop' | 'tablet' | 'mobile') {
+        console.log('device set', device)
+
         const widths = {
             desktop: 1280,
             tablet: 768,
@@ -193,7 +195,7 @@ export class Editor {
         this.state.viewport.device = device
         this.state.viewport.width = widths[device]
 
-        // this.store.emit({ type: 'SET_DEVICE', device })
+        this.store.emit({ type: 'SET_DEVICE', device })
     }
 
     public setResponsiveMode() {

@@ -2,12 +2,14 @@ import { useEffect, useRef } from 'react'
 import type { Editor } from '../core/Editor'
 import { IframeRenderer } from '../renderer/IframeRenderer'
 import { OverlayManager } from '../overlay/OverlayManager'
+import { useEditorState } from '../core/useEditorState'
 
 export function Canvas({ editor }: { editor: Editor }) {
     const iframeRef = useRef<HTMLIFrameElement>(null)
     const overlayRef = useRef<HTMLDivElement>(null)
 
-    const width = editor.state.viewport.width
+    const state = useEditorState(editor)
+    const width = state.viewport.width
 
     useEffect(() => {
         const renderer = new IframeRenderer(editor)
@@ -20,29 +22,40 @@ export function Canvas({ editor }: { editor: Editor }) {
     return (
         <div
             style={{
-                width,
-                position: 'relative',
                 flex: 1,
-                overflow: 'hidden',
+                overflow: 'auto',
+                background: '#f3f3f3',
+                display: 'flex',
+                justifyContent: 'center',
             }}
         >
-            <iframe
-                ref={iframeRef}
-                style={{
-                    width: '100%',
-                    height: '100vh',
-                    border: 'none',
-                }}
-            />
-
             <div
-                ref={overlayRef}
                 style={{
-                    position: 'absolute',
-                    inset: 0,
-                    pointerEvents: 'none',
+                    width,
+                    position: 'relative',
+                    border: '1px solid red',
+                    background: 'white',
+                    transition: 'width 0.2s ease',
                 }}
-            />
+            >
+                <iframe
+                    ref={iframeRef}
+                    style={{
+                        width: '100%',
+                        height: '100vh',
+                        border: 'none',
+                    }}
+                />
+
+                <div
+                    ref={overlayRef}
+                    style={{
+                        position: 'absolute',
+                        inset: 0,
+                        pointerEvents: 'none',
+                    }}
+                />
+            </div>
         </div>
     )
 }
