@@ -12,6 +12,8 @@ type Rect = {
     bottom: number
 }
 
+type Position = 'top' | 'bottom' | 'left' | 'right'
+
 export class OverlayManager {
     public editor: Editor
     public renderer: IframeRenderer
@@ -133,6 +135,7 @@ export class OverlayManager {
         bar.style.padding = '4px 6px'
         bar.style.fontSize = '12px'
         bar.style.borderRadius = '4px'
+        bar.style.transform = 'translateZ(0)'
 
         this.overlayRoot.appendChild(bar)
         this.actionBar = bar
@@ -172,6 +175,40 @@ export class OverlayManager {
 
         this.overlayRoot.appendChild(btn)
         this.addButton = btn
+    }
+
+    private renderActions(nodeId: string) {
+        const actions = this.config.actionBar.actions
+
+        this.actionBar.innerHTML = ''
+
+        actions.forEach((action) => {
+            const btn = document.createElement('button')
+
+            btn.style.background = 'transparent'
+            btn.style.border = 'none'
+            btn.style.color = 'white'
+            btn.style.cursor = 'pointer'
+            btn.style.fontSize = '12px'
+            btn.style.padding = '2px'
+
+            if (typeof action.icon === 'string') {
+                btn.textContent = action.icon
+            } else {
+                btn.appendChild(action.icon)
+            }
+
+            if (action.tooltip) {
+                btn.title = action.tooltip
+            }
+
+            btn.onclick = (e) => {
+                e.stopPropagation()
+                action.onClick(this.editor, nodeId)
+            }
+
+            this.actionBar.appendChild(btn)
+        })
     }
 
     public update() {
@@ -214,17 +251,19 @@ export class OverlayManager {
             return
         }
 
-        const firstId = [...selectedIds][0]
+        const firstSelectionId = [...selectedIds][0]
 
-        const dom = this.renderer.getDom(firstId)
+        const dom = this.renderer.getDom(firstSelectionId)
         if (!dom) return
 
         const rect = this.getAbsoluteRect(dom)
 
-        const node = this.editor.getNode(firstId)
+        const node = this.editor.getNode(firstSelectionId)
         const elementConfig = this.config.elements?.[node?.type ?? '']
 
         const color = elementConfig?.selectionColor ?? this.config.defaultSelectionColor
+
+        this.renderActions(firstSelectionId)
 
         this.selectionBox.style.display = 'block'
         this.selectionBox.style.borderColor = color
@@ -268,35 +307,72 @@ export class OverlayManager {
         el.style.height = rect.height + 'px'
     }
 
+    private computeActionBarPosition(rect: Rect, position: Position) {
+        const { align, offset, gap = 6 } = this.config.actionBar
+
+        const barRect = this.actionBar.getBoundingClientRect()
+
+        let x = 0
+        let y = 0
+
+        if (position === 'top' || position === 'bottom') {
+            if (align === 'start') x = rect.left
+            if (align === 'center') x = rect.left + rect.width / 2 - barRect.width / 2
+            if (align === 'end') x = rect.right - barRect.width
+
+            if (position === 'top') {
+                y = offset === 'inside' ? rect.top + gap : rect.top - barRect.height - gap
+            }
+
+            if (position === 'bottom') {
+                y = offset === 'inside' ? rect.bottom - barRect.height - gap : rect.bottom + gap
+            }
+        }
+
+        if (position === 'left' || position === 'right') {
+            if (align === 'start') y = rect.top
+            if (align === 'center') y = rect.top + rect.height / 2 - barRect.height / 2
+            if (align === 'end') y = rect.bottom - barRect.height
+
+            if (position === 'left') {
+                x = offset === 'inside' ? rect.left + gap : rect.left - barRect.width - gap
+            }
+
+            if (position === 'right') {
+                x = offset === 'inside' ? rect.right - barRect.width - gap : rect.right + gap
+            }
+        }
+
+        return { x, y, width: barRect.width, height: barRect.height }
+    }
+
+    private isOverflowing(x: number, y: number, w: number, h: number) {
+        const canvas = this.overlayRoot.getBoundingClientRect()
+
+        return x < canvas.left || y < canvas.top || x + w > canvas.right || y + h > canvas.bottom
+    }
+
     private positionActionBar(rect: Rect) {
-        const placement = this.config.actionBar.placement
+        let position = this.config.actionBar.position as Position
 
-        let x = rect.left
-        let y = rect.top
+        let result = this.computeActionBarPosition(rect, position)
 
-        if (placement === 'top-right') {
-            x = rect.right
-            y = rect.top - 28
-        }
+        if (this.isOverflowing(result.x, result.y, result.width, result.height)) {
+            position = this.flipPosition(position)
 
-        if (placement === 'top-left') {
-            x = rect.left
-            y = rect.top - 28
-        }
-
-        if (placement === 'bottom-right') {
-            x = rect.right
-            y = rect.bottom
-        }
-
-        if (placement === 'bottom-left') {
-            x = rect.left
-            y = rect.bottom
+            result = this.computeActionBarPosition(rect, position)
         }
 
         this.actionBar.style.display = 'flex'
-        this.actionBar.style.left = x + 'px'
-        this.actionBar.style.top = y + 'px'
+        this.actionBar.style.left = result.x + 'px'
+        this.actionBar.style.top = result.y + 'px'
+    }
+
+    private flipPosition(pos: Position): Position {
+        if (pos === 'top') return 'bottom'
+        if (pos === 'bottom') return 'top'
+        if (pos === 'left') return 'right'
+        return 'left'
     }
 
     private showElementLabel(name: string, rect: Rect) {
@@ -312,7 +388,7 @@ export class OverlayManager {
         this.addButton.style.display = 'flex'
 
         this.addButton.style.left = rect.left + rect.width / 2 - 9 + 'px'
-        this.addButton.style.top = rect.bottom + 'px'
+        this.addButton.style.top = rect.bottom - 8 + 'px'
     }
 
     public destroy() {

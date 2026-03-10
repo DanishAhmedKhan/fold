@@ -49,7 +49,6 @@ export class IframeInteractionManager {
         if (e.shiftKey) {
             this.editor.toggleSelectNode(id)
         } else {
-            console.log('node selected', id)
             this.editor.selectNode(id)
         }
     }
