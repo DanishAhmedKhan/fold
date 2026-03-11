@@ -3,10 +3,6 @@ import { useEditorState } from '../core/useEditorState'
 import type { Editor } from '../core/Editor'
 
 export function ResizeHandle({ editor }: { editor: Editor }) {
-    // const device = useEditorStore((s) => s.device)
-    // const setCustomWidth = useEditorStore((s) => s.setCustomWidth)
-    // const setIsResizing = useEditorStore((s) => s.setIsResizing)
-
     const state = useEditorState(editor)
     const device = state.viewport.device
 
@@ -38,7 +34,6 @@ export function ResizeHandle({ editor }: { editor: Editor }) {
 
         handle.setPointerCapture(e.pointerId)
 
-        // setIsResizing(true)
         editor.setIsResizing(true)
         document.body.style.userSelect = 'none'
         document.body.style.cursor = 'ew-resize'
@@ -73,10 +68,8 @@ export function ResizeHandle({ editor }: { editor: Editor }) {
 
         const finalWidth = frameRef.current.offsetWidth
         if (device !== 'responsive') {
-            // setCustomWidth(device, finalWidth)
             editor.setCanvasWidth(finalWidth)
         }
-        // setIsResizing(false)
         editor.setIsResizing(false)
     }
 

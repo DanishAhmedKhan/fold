@@ -25,13 +25,25 @@ export interface OverlayBarConfig {
 
     actions?: OverlayAction[]
 
-    renderLabel?: boolean
-    renderAddButton?: boolean
+    // renderLabel?: boolean
+    // renderAddButton?: boolean
+
+    visibility?: {
+        hover: boolean
+        selected?: boolean
+    }
+}
+
+export interface OverlayBorderStyle {
+    color: string
+    width?: number
+    style?: 'solid' | 'dashed' | 'dotted'
+    radius?: number
 }
 
 export interface OverlayConfig {
-    defaultHoverColor: string
-    defaultSelectionColor: string
+    hover: OverlayBorderStyle
+    selection: OverlayBorderStyle
 
     bars: OverlayBarConfig[]
 }

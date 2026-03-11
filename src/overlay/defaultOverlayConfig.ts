@@ -1,9 +1,17 @@
 import type { OverlayConfig } from './OverlatConfig'
 
 export const defaultOverlayConfig: OverlayConfig = {
-    defaultHoverColor: '#999',
+    hover: {
+        color: '#999',
+        width: 1,
+        style: 'dashed',
+    },
 
-    defaultSelectionColor: '#3b82f6',
+    selection: {
+        color: '#3b82f6',
+        width: 2,
+        style: 'solid',
+    },
 
     bars: [
         {
@@ -14,8 +22,6 @@ export const defaultOverlayConfig: OverlayConfig = {
             offset: 'outside',
 
             orientation: 'horizontal',
-
-            // gap: 6,
 
             flipMode: 'both',
 

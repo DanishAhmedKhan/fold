@@ -37,7 +37,6 @@ export function Canvas({ editor }: { editor: Editor }) {
                 style={{
                     width: device === 'responsive' ? '100%' : width,
                     position: 'relative',
-                    border: '1px solid red',
                     background: 'white',
                     transition: isResizing ? 'none' : 'width 0.2s ease',
                 }}

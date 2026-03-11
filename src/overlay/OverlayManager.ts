@@ -2,7 +2,7 @@ import { Editor } from '../core/Editor'
 import { IframeRenderer } from '../renderer/IframeRenderer'
 
 import { defaultOverlayConfig } from './defaultOverlayConfig'
-import type { OverlayAction, OverlayConfig } from './OverlatConfig'
+import type { OverlayAction, OverlayBorderStyle, OverlayConfig } from './OverlatConfig'
 
 import { OverlayLayoutEngine } from './OverlayLayoutEngine'
 import { OverlayRenderer } from './OverlayRenderer'
@@ -35,6 +35,9 @@ export class OverlayManager {
 
     public mount(container: HTMLElement) {
         this.overlayRoot = container
+        this.overlayRoot.innerHTML = ''
+
+        this.bars.clear()
 
         this.overlayRoot.style.position = 'absolute'
         this.overlayRoot.style.inset = '0'
@@ -54,19 +57,23 @@ export class OverlayManager {
     }
 
     private createBoxes() {
-        const create = () => {
+        const create = (border?: OverlayBorderStyle) => {
             const el = document.createElement('div')
             el.style.position = 'absolute'
             el.style.pointerEvents = 'none'
+
+            if (border) {
+                el.style.borderColor = border.color || ''
+                el.style.borderStyle = border.style!
+                el.style.borderWidth = border.width! + 'px'
+            }
+
             this.overlayRoot.appendChild(el)
             return el
         }
 
-        this.hoverBox = create()
-        this.selectionBox = create()
-
-        this.hoverBox.style.border = '1px dashed #999'
-        this.selectionBox.style.border = '2px solid #3b82f6'
+        this.hoverBox = create(defaultOverlayConfig.hover)
+        this.selectionBox = create(defaultOverlayConfig.selection)
     }
 
     private createBars() {
