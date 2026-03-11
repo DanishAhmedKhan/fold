@@ -11,3 +11,4 @@ export type EditorPatch =
     | { type: 'CLEAR_SELECTION' }
     | { type: 'HOVER_NODE'; nodeId: string | null }
     | { type: 'CLEAR_HOVER' }
+    | { type: 'SET_DEVICE'; device: string }

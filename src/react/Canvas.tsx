@@ -10,6 +10,7 @@ export function Canvas({ editor }: { editor: Editor }) {
 
     const state = useEditorState(editor)
     const width = state.viewport.width
+    const isResponsive = state.viewport.isResponsive
 
     useEffect(() => {
         const renderer = new IframeRenderer(editor)
@@ -31,7 +32,7 @@ export function Canvas({ editor }: { editor: Editor }) {
         >
             <div
                 style={{
-                    width,
+                    width: isResponsive ? '100%' : width,
                     position: 'relative',
                     border: '1px solid red',
                     background: 'white',

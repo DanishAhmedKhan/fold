@@ -17,6 +17,7 @@ export interface EditorNode {
 export interface EditorViewport {
     device: 'desktop' | 'tablet' | 'mobile' | 'responsive'
     width: number
+    isResponsive: boolean
 }
 
 export interface EditorState {
