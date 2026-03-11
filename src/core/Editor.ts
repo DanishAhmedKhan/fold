@@ -192,7 +192,6 @@ export class Editor {
             mobile: 375,
         }
 
-        this.state.viewport.isResponsive = false
         this.state.viewport.device = device
         this.state.viewport.width = widths[device]
 
@@ -201,12 +200,16 @@ export class Editor {
 
     public setResponsiveMode() {
         this.state.viewport.device = 'responsive'
-        this.state.viewport.isResponsive = true
         this.store.emit({ type: 'SET_DEVICE', device: 'responsive' })
     }
 
     public setCanvasWidth(width: number) {
         this.state.viewport.width = width
-        // this.store.emit({ type: 'SET_CANVAS_WIDTH', width })
+        this.store.emit({ type: 'SET_CANVAS_WIDTH', width })
+    }
+
+    public setIsResizing(isResizing: boolean) {
+        this.state.viewport.isResizing = isResizing
+        this.store.emit({ type: 'SET_IS_RESIZING' })
     }
 }

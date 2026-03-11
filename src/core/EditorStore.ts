@@ -26,6 +26,7 @@ export class EditorStore {
             viewport: {
                 device: 'desktop',
                 width: 1280,
+                isResizing: false,
             },
         }
     }

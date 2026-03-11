@@ -3,6 +3,7 @@ import type { Editor } from '../core/Editor'
 import { IframeRenderer } from '../renderer/IframeRenderer'
 import { OverlayManager } from '../overlay/OverlayManager'
 import { useEditorState } from '../core/useEditorState'
+import { ResizeHandle } from './ResizeHandle'
 
 export function Canvas({ editor }: { editor: Editor }) {
     const iframeRef = useRef<HTMLIFrameElement>(null)
@@ -10,7 +11,8 @@ export function Canvas({ editor }: { editor: Editor }) {
 
     const state = useEditorState(editor)
     const width = state.viewport.width
-    const isResponsive = state.viewport.isResponsive
+    const device = state.viewport.device
+    const isResizing = state.viewport.isResizing
 
     useEffect(() => {
         const renderer = new IframeRenderer(editor)
@@ -31,12 +33,13 @@ export function Canvas({ editor }: { editor: Editor }) {
             }}
         >
             <div
+                id="canvas-frame"
                 style={{
-                    width: isResponsive ? '100%' : width,
+                    width: device === 'responsive' ? '100%' : width,
                     position: 'relative',
                     border: '1px solid red',
                     background: 'white',
-                    transition: 'width 0.2s ease',
+                    transition: isResizing ? 'none' : 'width 0.2s ease',
                 }}
             >
                 <iframe
@@ -47,6 +50,8 @@ export function Canvas({ editor }: { editor: Editor }) {
                         border: 'none',
                     }}
                 />
+
+                {device !== 'responsive' && <ResizeHandle editor={editor} />}
 
                 <div
                     ref={overlayRef}
