@@ -51,7 +51,6 @@ export class SelectionBoxController {
 
         const target = e.target as HTMLElement
 
-        // Ignore clicks on nodes (handled by click selection)
         if (target.closest('[data-node-id]')) return
 
         e.preventDefault()
@@ -67,7 +66,6 @@ export class SelectionBoxController {
         const dx = Math.abs(e.clientX - this.startX)
         const dy = Math.abs(e.clientY - this.startY)
 
-        // Start drag only after small threshold
         if (this.pending) {
             if (dx < 3 && dy < 3) return
 

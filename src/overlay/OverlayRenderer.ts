@@ -4,7 +4,6 @@ export class OverlayRenderer {
     constructor(
         private hoverBox: HTMLElement,
         private selectionBox: HTMLElement,
-        // private barElements: Map<string, HTMLElement>,
         private barInstances: Map<string, OverlayBarInstance>,
     ) {}
 
@@ -20,20 +19,6 @@ export class OverlayRenderer {
         } else {
             this.selectionBox.style.display = 'none'
         }
-
-        // for (const [id, el] of this.barElements) {
-        //     const bar = layout.bars.find((b) => b.id === id)
-
-        //     if (!bar) {
-        //         el.style.display = 'none'
-        //         continue
-        //     }
-
-        //     if (el.style.display === 'none') continue
-
-        //     el.style.left = bar.x + 'px'
-        //     el.style.top = bar.y + 'px'
-        // }
 
         for (const instance of this.barInstances.values()) {
             const bar = layout.bars.find((b) => b.id === instance.id)

@@ -22,7 +22,6 @@ export class IframeRenderer {
     constructor(editor: Editor) {
         this.editor = editor
 
-        // this.overlayInteraction = new OverlayInteractionManager(editor)
         this.overlayInteraction = new OverlayInteractionManager(editor, this.domNodeMap)
         this.builderInteraction = new IframeInteractionManager(editor)
     }
