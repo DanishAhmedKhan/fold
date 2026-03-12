@@ -15,13 +15,15 @@ export class IframeRenderer {
     public body!: HTMLElement
 
     public nodeDomMap = new Map<string, HTMLElement>()
+    public domNodeMap = new WeakMap<HTMLElement, string>()
 
     public unsubscribe?: () => void
 
     constructor(editor: Editor) {
         this.editor = editor
 
-        this.overlayInteraction = new OverlayInteractionManager(editor)
+        // this.overlayInteraction = new OverlayInteractionManager(editor)
+        this.overlayInteraction = new OverlayInteractionManager(editor, this.domNodeMap)
         this.builderInteraction = new IframeInteractionManager(editor)
     }
 
@@ -93,6 +95,7 @@ export class IframeRenderer {
         el.dataset.nodeId = node.id
 
         this.nodeDomMap.set(node.id, el)
+        this.domNodeMap.set(el, node.id)
 
         this.applyStyles(el, node)
 
@@ -126,6 +129,7 @@ export class IframeRenderer {
         dom.remove()
 
         this.nodeDomMap.delete(nodeId)
+        this.domNodeMap.delete(dom)
     }
 
     public moveNode(nodeId: string) {
