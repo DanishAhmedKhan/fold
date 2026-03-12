@@ -23,35 +23,58 @@ export class OverlayLayoutEngine {
         const layout: OverlayLayout = { bars: [] }
 
         const hoveredId = this.editor.state.hoveredId
+        const selectedIds = this.editor.state.selectedIds
+
+        let hoverRect: Rect | undefined
+        let selectionRect: Rect | undefined
 
         if (hoveredId) {
             const dom = this.iframeRenderer.getDom(hoveredId)
-            if (dom) layout.hoverRect = this.getAbsoluteRect(dom)
+            if (dom) {
+                hoverRect = this.getAbsoluteRect(dom)
+                layout.hoverRect = hoverRect
+            }
         }
 
-        const selectedIds = this.editor.state.selectedIds
+        if (selectedIds && selectedIds.size > 0) {
+            const id = [...selectedIds][0]
+            const dom = this.iframeRenderer.getDom(id)
 
-        if (!selectedIds || selectedIds.size === 0) return layout
+            if (dom) {
+                selectionRect = this.getAbsoluteRect(dom)
+                layout.selectionRect = selectionRect
+            }
+        }
 
-        const id = [...selectedIds][0]
+        for (const [elementId, el] of this.barElements) {
+            let rect: Rect | undefined
 
-        const dom = this.iframeRenderer.getDom(id)
-        if (!dom) return layout
+            if (elementId.startsWith('hover-')) {
+                rect = hoverRect
+            } else if (elementId.startsWith('selection-')) {
+                rect = selectionRect
+            }
 
-        const rect = this.getAbsoluteRect(dom)
+            if (!rect) continue
 
-        layout.selectionRect = rect
+            const baseId = elementId.replace('hover-', '').replace('selection-', '')
 
-        for (const bar of this.config.bars) {
-            const pos = this.computeBar(bar, rect)
-            layout.bars.push({ id: bar.id, x: pos.x, y: pos.y })
+            const bar = this.config.bars.find((b) => b.id === baseId)
+            if (!bar) continue
+
+            const pos = this.computeBar(bar, rect, el)
+
+            layout.bars.push({
+                id: elementId,
+                x: pos.x,
+                y: pos.y,
+            })
         }
 
         return layout
     }
 
-    private computeBar(bar: OverlayBarConfig, rect: Rect) {
-        const el = this.barElements.get(bar.id)!
+    private computeBar(bar: OverlayBarConfig, rect: Rect, el: HTMLElement) {
         const canvas = this.overlayRoot.getBoundingClientRect()
 
         let position = bar.position
@@ -118,25 +141,25 @@ export class OverlayLayoutEngine {
         if (position === 'top') {
             if (offset === 'inside') y = rect.top + gap
             else if (offset === 'outside') y = rect.top - size.height - gap
-            else y = rect.top - size.height / 2 - gap
+            else y = rect.top - size.height / 2
         }
 
         if (position === 'bottom') {
             if (offset === 'inside') y = rect.bottom - size.height - gap
             else if (offset === 'outside') y = rect.bottom + gap
-            else y = rect.bottom - size.height / 2 + gap
+            else y = rect.bottom - size.height / 2
         }
 
         if (position === 'left') {
             if (offset === 'inside') x = rect.left + gap
             else if (offset === 'outside') x = rect.left - size.width - gap
-            else x = rect.left - size.width / 2 - gap
+            else x = rect.left - size.width / 2
         }
 
         if (position === 'right') {
             if (offset === 'inside') x = rect.right - size.width - gap
             else if (offset === 'outside') x = rect.right + gap
-            else x = rect.right - size.width / 2 + gap
+            else x = rect.right - size.width / 2
         }
 
         return {

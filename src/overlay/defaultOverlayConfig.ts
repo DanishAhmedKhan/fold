@@ -42,9 +42,6 @@ export const defaultOverlayConfig: OverlayConfig = {
                     id: 'delete',
                     icon: '🗑',
                     tooltip: 'Delete',
-                    onClick: (editor, nodeId) => {
-                        // editor.delete(nodeId)
-                    },
                 },
             ],
 
@@ -92,6 +89,10 @@ export const defaultOverlayConfig: OverlayConfig = {
 
             style: {
                 borderRadius: '50%',
+            },
+
+            visibility: {
+                hover: false,
             },
         },
     ],

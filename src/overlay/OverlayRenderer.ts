@@ -7,33 +7,6 @@ export class OverlayRenderer {
         private barElements: Map<string, HTMLElement>,
     ) {}
 
-    // public render(layout: OverlayLayout) {
-    //     if (layout.hoverRect) {
-    //         this.showBox(this.hoverBox, layout.hoverRect)
-    //     } else {
-    //         this.hoverBox.style.display = 'none'
-    //     }
-
-    //     if (layout.selectionRect) {
-    //         this.showBox(this.selectionBox, layout.selectionRect)
-    //     } else {
-    //         this.selectionBox.style.display = 'none'
-    //     }
-
-    //     for (const [id, el] of this.barElements) {
-    //         const bar = layout.bars.find((b) => b.id === id)
-
-    //         if (!bar) {
-    //             el.style.display = 'none'
-    //             continue
-    //         }
-
-    //         el.style.display = 'flex'
-    //         el.style.left = bar.x + 'px'
-    //         el.style.top = bar.y + 'px'
-    //     }
-    // }
-
     public render(layout: OverlayLayout) {
         if (layout.hoverRect) {
             this.showBox(this.hoverBox, layout.hoverRect)
@@ -50,7 +23,10 @@ export class OverlayRenderer {
         for (const [id, el] of this.barElements) {
             const bar = layout.bars.find((b) => b.id === id)
 
-            if (!bar) continue
+            if (!bar) {
+                el.style.display = 'none'
+                continue
+            }
 
             if (el.style.display === 'none') continue
 

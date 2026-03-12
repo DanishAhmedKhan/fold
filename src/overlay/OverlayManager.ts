@@ -13,7 +13,9 @@ export class OverlayManager {
     public hoverBox!: HTMLElement
     public selectionBox!: HTMLElement
 
-    private bars = new Map<string, HTMLElement>()
+    private hoverBars = new Map<string, HTMLElement>()
+    private selectionBars = new Map<string, HTMLElement>()
+    private allBars = new Map<string, HTMLElement>()
 
     private layout!: OverlayLayoutEngine
     private rendererUI!: OverlayRenderer
@@ -38,7 +40,9 @@ export class OverlayManager {
         this.overlayRoot = container
         this.overlayRoot.innerHTML = ''
 
-        this.bars.clear()
+        this.hoverBars.clear()
+        this.selectionBars.clear()
+        this.allBars.clear()
 
         this.overlayRoot.style.position = 'absolute'
         this.overlayRoot.style.inset = '0'
@@ -47,9 +51,9 @@ export class OverlayManager {
         this.createBoxes()
         this.createBars()
 
-        this.layout = new OverlayLayoutEngine(this.editor, this.renderer, this.config, this.overlayRoot, this.bars)
+        this.layout = new OverlayLayoutEngine(this.editor, this.renderer, this.config, this.overlayRoot, this.allBars)
 
-        this.rendererUI = new OverlayRenderer(this.hoverBox, this.selectionBox, this.bars)
+        this.rendererUI = new OverlayRenderer(this.hoverBox, this.selectionBox, this.allBars)
 
         this.unsubscribe = this.editor.subscribe(() => this.requestUpdate())
 
@@ -60,6 +64,7 @@ export class OverlayManager {
     private createBoxes() {
         const create = (border?: OverlayBorderStyle) => {
             const el = document.createElement('div')
+
             el.style.position = 'absolute'
             el.style.pointerEvents = 'none'
 
@@ -70,39 +75,63 @@ export class OverlayManager {
             }
 
             this.overlayRoot.appendChild(el)
+
             return el
         }
 
-        this.hoverBox = create(defaultOverlayConfig.hover)
-        this.selectionBox = create(defaultOverlayConfig.selection)
+        this.hoverBox = create(this.config.hover)
+        this.selectionBox = create(this.config.selection)
     }
 
     private createBars() {
         for (const bar of this.config.bars) {
-            const el = document.createElement('div')
-
-            el.style.position = 'absolute'
-            el.style.pointerEvents = 'auto'
-            el.style.display = 'none'
-
-            el.style.color = 'white'
-            el.style.padding = '2px 6px'
-            el.style.gap = '4px'
-            el.style.fontSize = '12px'
-
-            if (bar.orientation === 'vertical') {
-                el.style.flexDirection = 'column'
-                el.style.display = 'flex'
-            } else {
-                el.style.flexDirection = 'row'
+            const visibility = {
+                hover: bar.visibility?.hover ?? true,
+                selection: bar.visibility?.selection ?? true,
             }
 
-            Object.assign(el.style, bar.style)
+            if (visibility.hover) {
+                const el = this.createBarElement(bar)
 
-            this.overlayRoot.appendChild(el)
+                this.overlayRoot.appendChild(el)
 
-            this.bars.set(bar.id, el)
+                this.hoverBars.set(bar.id, el)
+                this.allBars.set(`hover-${bar.id}`, el)
+            }
+
+            if (visibility.selection) {
+                const el = this.createBarElement(bar)
+
+                this.overlayRoot.appendChild(el)
+
+                this.selectionBars.set(bar.id, el)
+                this.allBars.set(`selection-${bar.id}`, el)
+            }
         }
+    }
+
+    private createBarElement(bar: OverlayBarConfig) {
+        const el = document.createElement('div')
+
+        el.style.position = 'absolute'
+        el.style.pointerEvents = 'auto'
+        el.style.display = 'none'
+
+        el.style.color = 'white'
+        el.style.padding = '2px 6px'
+        el.style.gap = '4px'
+        el.style.fontSize = '12px'
+        el.style.display = 'flex'
+
+        if (bar.orientation === 'vertical') {
+            el.style.flexDirection = 'column'
+        } else {
+            el.style.flexDirection = 'row'
+        }
+
+        Object.assign(el.style, bar.style)
+
+        return el
     }
 
     private startLoop() {
@@ -112,18 +141,16 @@ export class OverlayManager {
                 const hoveredId = this.editor.state.hoveredId
 
                 const selectedNode = selectedIds?.size ? [...selectedIds][0] : undefined
-                const activeNode = selectedNode ?? hoveredId
 
-                const selectionChanged = selectedNode !== this.lastSelection
-                const hoverChanged = hoveredId !== this.lastHover
-
-                if (activeNode && (selectionChanged || hoverChanged)) {
-                    this.renderBarActions(activeNode)
-                    this.updateBarColors(activeNode)
+                if (hoveredId !== this.lastHover) {
+                    this.renderHoverBars(hoveredId)
+                    this.lastHover = hoveredId
                 }
 
-                this.lastSelection = selectedNode
-                this.lastHover = hoveredId
+                if (selectedNode !== this.lastSelection) {
+                    this.renderSelectionBars(selectedNode)
+                    this.lastSelection = selectedNode
+                }
 
                 const layout = this.layout.compute()
                 this.rendererUI.render(layout)
@@ -137,33 +164,17 @@ export class OverlayManager {
         loop()
     }
 
-    private isBarVisible(bar: OverlayBarConfig, nodeId: string) {
-        const visibility = bar.visibility
+    private renderHoverBars(nodeId?: string) {
+        this.hoverBars.forEach((el) => (el.style.display = 'none'))
 
-        if (!visibility) return true
+        if (!nodeId) return
 
-        const isSelected = this.editor.state.selectedIds.has(nodeId)
-        const isHovered = this.editor.state.hoveredId === nodeId
-
-        if (isSelected && visibility.selection) return true
-        if (isHovered && visibility.hover) return true
-
-        return false
-    }
-
-    private renderBarActions(nodeId: string) {
         for (const barConfig of this.config.bars) {
-            const el = this.bars.get(barConfig.id)!
+            const el = this.hoverBars.get(barConfig.id)
+
+            if (!el) continue
+
             const actions = barConfig.actions ?? []
-
-            const visible = this.isBarVisible(barConfig, nodeId)
-
-            if (!visible) {
-                el.style.display = 'none'
-                continue
-            }
-
-            el.style.display = 'flex'
 
             el.innerHTML = ''
 
@@ -171,6 +182,33 @@ export class OverlayManager {
                 const btn = this.createActionElement(action, nodeId)
                 el.appendChild(btn)
             })
+
+            el.style.display = 'flex'
+            el.style.background = this.config.hover.color
+        }
+    }
+
+    private renderSelectionBars(nodeId?: string) {
+        this.selectionBars.forEach((el) => (el.style.display = 'none'))
+
+        if (!nodeId) return
+
+        for (const barConfig of this.config.bars) {
+            const el = this.selectionBars.get(barConfig.id)
+
+            if (!el) continue
+
+            const actions = barConfig.actions ?? []
+
+            el.innerHTML = ''
+
+            actions.forEach((action) => {
+                const btn = this.createActionElement(action, nodeId)
+                el.appendChild(btn)
+            })
+
+            el.style.display = 'flex'
+            el.style.background = this.config.selection.color
         }
     }
 
@@ -205,29 +243,6 @@ export class OverlayManager {
         }
 
         return btn
-    }
-
-    private getOverlayColor(nodeId: string) {
-        const selected = this.editor.state.selectedIds
-        const hovered = this.editor.state.hoveredId
-
-        if (selected.has(nodeId)) {
-            return this.config.selection.color
-        }
-
-        if (hovered === nodeId) {
-            return this.config.hover.color
-        }
-
-        return this.config.selection.color
-    }
-
-    private updateBarColors(nodeId: string) {
-        const color = this.getOverlayColor(nodeId)
-
-        this.bars.forEach((bar) => {
-            bar.style.background = color
-        })
     }
 
     public requestUpdate() {
