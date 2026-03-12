@@ -18,3 +18,10 @@ export interface OverlayLayout {
     selectionRect?: Rect | null
     bars: BarLayout[]
 }
+
+export type OverlayBarInstance = {
+    id: string
+    barId: string
+    mode: 'hover' | 'selection'
+    element: HTMLElement
+}

@@ -1,7 +1,7 @@
 import { Editor } from '../core/Editor'
 import { IframeRenderer } from '../renderer/IframeRenderer'
 import type { OverlayBarConfig, OverlayConfig, Position } from './OverlatConfig'
-import type { OverlayLayout, Rect } from './OverlayTypes'
+import type { OverlayBarInstance, OverlayLayout, Rect } from './OverlayTypes'
 
 type Box = {
     x: number
@@ -16,8 +16,64 @@ export class OverlayLayoutEngine {
         private iframeRenderer: IframeRenderer,
         private config: OverlayConfig,
         private overlayRoot: HTMLElement,
-        private barElements: Map<string, HTMLElement>,
+        // private barElements: Map<string, HTMLElement>,
+        private barInstances: Map<string, OverlayBarInstance>,
     ) {}
+
+    // public compute(): OverlayLayout {
+    //     const layout: OverlayLayout = { bars: [] }
+
+    //     const hoveredId = this.editor.state.hoveredId
+    //     const selectedIds = this.editor.state.selectedIds
+
+    //     let hoverRect: Rect | undefined
+    //     let selectionRect: Rect | undefined
+
+    //     if (hoveredId) {
+    //         const dom = this.iframeRenderer.getDom(hoveredId)
+    //         if (dom) {
+    //             hoverRect = this.getAbsoluteRect(dom)
+    //             layout.hoverRect = hoverRect
+    //         }
+    //     }
+
+    //     if (selectedIds && selectedIds.size > 0) {
+    //         const id = [...selectedIds][0]
+    //         const dom = this.iframeRenderer.getDom(id)
+
+    //         if (dom) {
+    //             selectionRect = this.getAbsoluteRect(dom)
+    //             layout.selectionRect = selectionRect
+    //         }
+    //     }
+
+    //     for (const [elementId, el] of this.barElements) {
+    //         let rect: Rect | undefined
+
+    //         if (elementId.startsWith('hover-')) {
+    //             rect = hoverRect
+    //         } else if (elementId.startsWith('selection-')) {
+    //             rect = selectionRect
+    //         }
+
+    //         if (!rect) continue
+
+    //         const baseId = elementId.replace('hover-', '').replace('selection-', '')
+
+    //         const bar = this.config.bars.find((b) => b.id === baseId)
+    //         if (!bar) continue
+
+    //         const pos = this.computeBar(bar, rect, el)
+
+    //         layout.bars.push({
+    //             id: elementId,
+    //             x: pos.x,
+    //             y: pos.y,
+    //         })
+    //     }
+
+    //     return layout
+    // }
 
     public compute(): OverlayLayout {
         const layout: OverlayLayout = { bars: [] }
@@ -36,7 +92,7 @@ export class OverlayLayoutEngine {
             }
         }
 
-        if (selectedIds && selectedIds.size > 0) {
+        if (selectedIds?.size) {
             const id = [...selectedIds][0]
             const dom = this.iframeRenderer.getDom(id)
 
@@ -46,26 +102,18 @@ export class OverlayLayoutEngine {
             }
         }
 
-        for (const [elementId, el] of this.barElements) {
-            let rect: Rect | undefined
-
-            if (elementId.startsWith('hover-')) {
-                rect = hoverRect
-            } else if (elementId.startsWith('selection-')) {
-                rect = selectionRect
-            }
+        for (const instance of this.barInstances.values()) {
+            const rect = instance.mode === 'hover' ? hoverRect : selectionRect
 
             if (!rect) continue
 
-            const baseId = elementId.replace('hover-', '').replace('selection-', '')
-
-            const bar = this.config.bars.find((b) => b.id === baseId)
+            const bar = this.config.bars.find((b) => b.id === instance.barId)
             if (!bar) continue
 
-            const pos = this.computeBar(bar, rect, el)
+            const pos = this.computeBar(bar, rect, instance.element)
 
             layout.bars.push({
-                id: elementId,
+                id: instance.id,
                 x: pos.x,
                 y: pos.y,
             })

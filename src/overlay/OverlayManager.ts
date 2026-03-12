@@ -6,6 +6,7 @@ import type { OverlayAction, OverlayBarConfig, OverlayBorderStyle, OverlayConfig
 
 import { OverlayLayoutEngine } from './OverlayLayoutEngine'
 import { OverlayRenderer } from './OverlayRenderer'
+import type { OverlayBarInstance } from './OverlayTypes'
 
 export class OverlayManager {
     public overlayRoot!: HTMLElement
@@ -13,9 +14,7 @@ export class OverlayManager {
     public hoverBox!: HTMLElement
     public selectionBox!: HTMLElement
 
-    private hoverBars = new Map<string, HTMLElement>()
-    private selectionBars = new Map<string, HTMLElement>()
-    private allBars = new Map<string, HTMLElement>()
+    private barInstances = new Map<string, OverlayBarInstance>()
 
     private layout!: OverlayLayoutEngine
     private rendererUI!: OverlayRenderer
@@ -40,9 +39,7 @@ export class OverlayManager {
         this.overlayRoot = container
         this.overlayRoot.innerHTML = ''
 
-        this.hoverBars.clear()
-        this.selectionBars.clear()
-        this.allBars.clear()
+        this.barInstances.clear()
 
         this.overlayRoot.style.position = 'absolute'
         this.overlayRoot.style.inset = '0'
@@ -51,9 +48,15 @@ export class OverlayManager {
         this.createBoxes()
         this.createBars()
 
-        this.layout = new OverlayLayoutEngine(this.editor, this.renderer, this.config, this.overlayRoot, this.allBars)
+        this.layout = new OverlayLayoutEngine(
+            this.editor,
+            this.renderer,
+            this.config,
+            this.overlayRoot,
+            this.barInstances,
+        )
 
-        this.rendererUI = new OverlayRenderer(this.hoverBox, this.selectionBox, this.allBars)
+        this.rendererUI = new OverlayRenderer(this.hoverBox, this.selectionBox, this.barInstances)
 
         this.unsubscribe = this.editor.subscribe(() => this.requestUpdate())
 
@@ -91,23 +94,28 @@ export class OverlayManager {
             }
 
             if (visibility.hover) {
-                const el = this.createBarElement(bar)
-
-                this.overlayRoot.appendChild(el)
-
-                this.hoverBars.set(bar.id, el)
-                this.allBars.set(`hover-${bar.id}`, el)
+                this.createBarInstance(bar, 'hover')
             }
 
             if (visibility.selection) {
-                const el = this.createBarElement(bar)
-
-                this.overlayRoot.appendChild(el)
-
-                this.selectionBars.set(bar.id, el)
-                this.allBars.set(`selection-${bar.id}`, el)
+                this.createBarInstance(bar, 'selection')
             }
         }
+    }
+
+    private createBarInstance(bar: OverlayBarConfig, mode: 'hover' | 'selection') {
+        const el = this.createBarElement(bar)
+
+        const id = `${bar.id}-${mode}`
+
+        this.overlayRoot.appendChild(el)
+
+        this.barInstances.set(id, {
+            id,
+            barId: bar.id,
+            mode,
+            element: el,
+        })
     }
 
     private createBarElement(bar: OverlayBarConfig) {
@@ -143,16 +151,17 @@ export class OverlayManager {
                 const selectedNode = selectedIds?.size ? [...selectedIds][0] : undefined
 
                 if (hoveredId !== this.lastHover) {
-                    this.renderHoverBars(hoveredId)
+                    this.renderBars('hover', hoveredId)
                     this.lastHover = hoveredId
                 }
 
                 if (selectedNode !== this.lastSelection) {
-                    this.renderSelectionBars(selectedNode)
+                    this.renderBars('selection', selectedNode)
                     this.lastSelection = selectedNode
                 }
 
                 const layout = this.layout.compute()
+
                 this.rendererUI.render(layout)
 
                 this.needsUpdate = false
@@ -164,40 +173,22 @@ export class OverlayManager {
         loop()
     }
 
-    private renderHoverBars(nodeId?: string) {
-        this.hoverBars.forEach((el) => (el.style.display = 'none'))
-
-        if (!nodeId) return
-
-        for (const barConfig of this.config.bars) {
-            const el = this.hoverBars.get(barConfig.id)
-
-            if (!el) continue
-
-            const actions = barConfig.actions ?? []
-
-            el.innerHTML = ''
-
-            actions.forEach((action) => {
-                const btn = this.createActionElement(action, nodeId)
-                el.appendChild(btn)
-            })
-
-            el.style.display = 'flex'
-            el.style.background = this.config.hover.color
+    private renderBars(mode: 'hover' | 'selection', nodeId?: string) {
+        for (const instance of this.barInstances.values()) {
+            if (instance.mode === mode) {
+                instance.element.style.display = 'none'
+            }
         }
-    }
-
-    private renderSelectionBars(nodeId?: string) {
-        this.selectionBars.forEach((el) => (el.style.display = 'none'))
 
         if (!nodeId) return
 
-        for (const barConfig of this.config.bars) {
-            const el = this.selectionBars.get(barConfig.id)
+        for (const instance of this.barInstances.values()) {
+            if (instance.mode !== mode) continue
 
-            if (!el) continue
+            const barConfig = this.config.bars.find((b) => b.id === instance.barId)
+            if (!barConfig) continue
 
+            const el = instance.element
             const actions = barConfig.actions ?? []
 
             el.innerHTML = ''
@@ -208,7 +199,12 @@ export class OverlayManager {
             })
 
             el.style.display = 'flex'
-            el.style.background = this.config.selection.color
+
+            if (mode === 'hover') {
+                el.style.background = this.config.hover.color
+            } else {
+                el.style.background = this.config.selection.color
+            }
         }
     }
 
@@ -238,7 +234,6 @@ export class OverlayManager {
 
         btn.onclick = (e) => {
             e.stopPropagation()
-
             action.onClick?.(this.editor, nodeId)
         }
 
