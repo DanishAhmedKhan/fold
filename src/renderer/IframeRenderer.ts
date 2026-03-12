@@ -3,10 +3,12 @@ import { IframeInteractionManager } from '../interaction/IframeInteractionManage
 import { iframeTemplate } from './iframeTemplate'
 import type { EditorNode } from '../core/types'
 import type { EditorPatch } from '../core/EditorPatch'
+import { OverlayInteractionManager } from '../interaction/OverlayInteractionManager'
 
 export class IframeRenderer {
     public editor: Editor
-    public interaction!: IframeInteractionManager
+    private overlayInteraction!: OverlayInteractionManager
+    private builderInteraction!: IframeInteractionManager
 
     public iframe!: HTMLIFrameElement
     public doc!: Document
@@ -18,7 +20,9 @@ export class IframeRenderer {
 
     constructor(editor: Editor) {
         this.editor = editor
-        this.interaction = new IframeInteractionManager(editor)
+
+        this.overlayInteraction = new OverlayInteractionManager(editor)
+        this.builderInteraction = new IframeInteractionManager(editor)
     }
 
     public mount(iframe: HTMLIFrameElement) {
@@ -37,7 +41,9 @@ export class IframeRenderer {
 
         this.renderInitialTree()
         this.subscribeToEditor()
-        this.interaction.mount(doc)
+
+        this.overlayInteraction.mount(this.doc)
+        this.builderInteraction.mount(this.doc)
 
         requestAnimationFrame(() => {
             iframe.style.visibility = 'visible'
@@ -162,6 +168,8 @@ export class IframeRenderer {
     public destroy() {
         this.unsubscribe?.()
         this.nodeDomMap.clear()
-        this.interaction.destroy()
+
+        this.overlayInteraction.destroy()
+        this.builderInteraction.destroy()
     }
 }
