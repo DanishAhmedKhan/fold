@@ -84,7 +84,8 @@ export class OverlayManager {
             el.style.pointerEvents = 'auto'
             el.style.display = 'none'
 
-            el.style.background = 'rgb(59,130,246)'
+            // el.style.background = 'rgb(59,130,246)'
+            el.style.background = 'red'
             el.style.color = 'white'
 
             el.style.padding = '2px 6px'

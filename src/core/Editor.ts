@@ -184,8 +184,6 @@ export class Editor {
     }
 
     public setDevice(device: 'desktop' | 'tablet' | 'mobile') {
-        console.log('device set', device)
-
         const widths = {
             desktop: 1280,
             tablet: 768,

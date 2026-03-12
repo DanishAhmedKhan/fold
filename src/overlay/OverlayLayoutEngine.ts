@@ -3,10 +3,17 @@ import { IframeRenderer } from '../renderer/IframeRenderer'
 import type { OverlayBarConfig, OverlayConfig, Position } from './OverlatConfig'
 import type { OverlayLayout, Rect } from './OverlayTypes'
 
+type Box = {
+    x: number
+    y: number
+    width: number
+    height: number
+}
+
 export class OverlayLayoutEngine {
     constructor(
         private editor: Editor,
-        private renderer: IframeRenderer,
+        private iframeRenderer: IframeRenderer,
         private config: OverlayConfig,
         private overlayRoot: HTMLElement,
         private barElements: Map<string, HTMLElement>,
@@ -15,10 +22,10 @@ export class OverlayLayoutEngine {
     public compute(): OverlayLayout {
         const layout: OverlayLayout = { bars: [] }
 
-        const hovered = this.editor.state.hoveredId
+        const hoveredId = this.editor.state.hoveredId
 
-        if (hovered) {
-            const dom = this.renderer.getDom(hovered)
+        if (hoveredId) {
+            const dom = this.iframeRenderer.getDom(hoveredId)
             if (dom) layout.hoverRect = this.getAbsoluteRect(dom)
         }
 
@@ -28,7 +35,7 @@ export class OverlayLayoutEngine {
 
         const id = [...selectedIds][0]
 
-        const dom = this.renderer.getDom(id)
+        const dom = this.iframeRenderer.getDom(id)
         if (!dom) return layout
 
         const rect = this.getAbsoluteRect(dom)
@@ -79,18 +86,17 @@ export class OverlayLayoutEngine {
     }
 
     private computePosition(bar: OverlayBarConfig, rect: Rect, el: HTMLElement, position: Position) {
-        const { align, offset, gap = 6 } = bar
+        const { align, offset, gap = 0 } = bar
+        const prevDisplay = el.style.display
 
-        const prev = el.style.display
-
-        if (prev === 'none') {
+        if (prevDisplay === 'none') {
             el.style.visibility = 'hidden'
             el.style.display = 'flex'
         }
 
         const size = el.getBoundingClientRect()
 
-        el.style.display = prev
+        el.style.display = prevDisplay
         el.style.visibility = ''
 
         let x = 0
@@ -134,7 +140,7 @@ export class OverlayLayoutEngine {
         return 'left'
     }
 
-    private isOverflow(result: any, canvas: DOMRect) {
+    private isOverflow(result: Box, canvas: DOMRect) {
         return (
             result.x < 0 ||
             result.y < 0 ||
@@ -150,7 +156,7 @@ export class OverlayLayoutEngine {
     private getAbsoluteRect(dom: HTMLElement): Rect {
         const rect = dom.getBoundingClientRect()
 
-        const iframeRect = this.renderer.iframe.getBoundingClientRect()
+        const iframeRect = this.iframeRenderer.iframe.getBoundingClientRect()
         const overlayRect = this.overlayRoot.getBoundingClientRect()
 
         const left = iframeRect.left + rect.left - overlayRect.left
