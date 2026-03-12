@@ -2,6 +2,8 @@ import type { Editor } from '../core/Editor'
 
 export type OverlayOrientation = 'horizontal' | 'vertical'
 export type Position = 'top' | 'bottom' | 'left' | 'right'
+export type Align = 'start' | 'center' | 'end'
+export type Offset = 'inside' | 'outside' | 'middle'
 
 export interface OverlayAction {
     id: string
@@ -15,8 +17,8 @@ export interface OverlayBarConfig {
     id: string
 
     position: Position
-    align: 'start' | 'center' | 'end'
-    offset: 'inside' | 'outside'
+    align: Align
+    offset: Offset
 
     orientation?: OverlayOrientation
     gap?: number
@@ -25,12 +27,11 @@ export interface OverlayBarConfig {
 
     actions?: OverlayAction[]
 
-    // renderLabel?: boolean
-    // renderAddButton?: boolean
+    style?: Record<string, string | number>
 
     visibility?: {
-        hover: boolean
-        selected?: boolean
+        hover?: boolean
+        selection?: boolean
     }
 }
 

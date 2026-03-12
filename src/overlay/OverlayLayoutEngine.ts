@@ -87,6 +87,7 @@ export class OverlayLayoutEngine {
 
     private computePosition(bar: OverlayBarConfig, rect: Rect, el: HTMLElement, position: Position) {
         const { align, offset, gap = 0 } = bar
+
         const prevDisplay = el.style.display
 
         if (prevDisplay === 'none') {
@@ -99,38 +100,51 @@ export class OverlayLayoutEngine {
         el.style.display = prevDisplay
         el.style.visibility = ''
 
+        const horizontal = position === 'top' || position === 'bottom'
+
         let x = 0
         let y = 0
 
-        if (position === 'top' || position === 'bottom') {
+        if (horizontal) {
             if (align === 'start') x = rect.left
-            if (align === 'center') x = rect.left + rect.width / 2 - size.width / 2
-            if (align === 'end') x = rect.right - size.width
-
-            if (position === 'top') {
-                y = offset === 'inside' ? rect.top + gap : rect.top - size.height - gap
-            }
-
-            if (position === 'bottom') {
-                y = offset === 'inside' ? rect.bottom - size.height - gap : rect.bottom + gap
-            }
-        }
-
-        if (position === 'left' || position === 'right') {
+            else if (align === 'center') x = rect.left + rect.width / 2 - size.width / 2
+            else if (align === 'end') x = rect.right - size.width
+        } else {
             if (align === 'start') y = rect.top
-            if (align === 'center') y = rect.top + rect.height / 2 - size.height / 2
-            if (align === 'end') y = rect.bottom - size.height
-
-            if (position === 'left') {
-                x = offset === 'inside' ? rect.left + gap : rect.left - size.width - gap
-            }
-
-            if (position === 'right') {
-                x = offset === 'inside' ? rect.right - size.width - gap : rect.right + gap
-            }
+            else if (align === 'center') y = rect.top + rect.height / 2 - size.height / 2
+            else if (align === 'end') y = rect.bottom - size.height
         }
 
-        return { x, y, width: size.width, height: size.height }
+        if (position === 'top') {
+            if (offset === 'inside') y = rect.top + gap
+            else if (offset === 'outside') y = rect.top - size.height - gap
+            else y = rect.top - size.height / 2 - gap
+        }
+
+        if (position === 'bottom') {
+            if (offset === 'inside') y = rect.bottom - size.height - gap
+            else if (offset === 'outside') y = rect.bottom + gap
+            else y = rect.bottom - size.height / 2 + gap
+        }
+
+        if (position === 'left') {
+            if (offset === 'inside') x = rect.left + gap
+            else if (offset === 'outside') x = rect.left - size.width - gap
+            else x = rect.left - size.width / 2 - gap
+        }
+
+        if (position === 'right') {
+            if (offset === 'inside') x = rect.right - size.width - gap
+            else if (offset === 'outside') x = rect.right + gap
+            else x = rect.right - size.width / 2 + gap
+        }
+
+        return {
+            x,
+            y,
+            width: size.width,
+            height: size.height,
+        }
     }
 
     private flip(pos: Position): Position {

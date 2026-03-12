@@ -47,6 +47,11 @@ export const defaultOverlayConfig: OverlayConfig = {
                     },
                 },
             ],
+
+            visibility: {
+                hover: true,
+                selection: true,
+            },
         },
 
         {
@@ -73,7 +78,7 @@ export const defaultOverlayConfig: OverlayConfig = {
 
             position: 'bottom',
             align: 'center',
-            offset: 'outside',
+            offset: 'middle',
 
             orientation: 'horizontal',
 
@@ -84,6 +89,10 @@ export const defaultOverlayConfig: OverlayConfig = {
                     tooltip: 'Add Element',
                 },
             ],
+
+            style: {
+                borderRadius: '50%',
+            },
         },
     ],
 }
