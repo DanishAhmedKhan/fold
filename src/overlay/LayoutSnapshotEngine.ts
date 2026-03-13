@@ -8,7 +8,7 @@ export class LayoutSnapshotEngine {
         private overlayRoot: HTMLElement,
     ) {}
 
-    capture(): LayoutSnapshot {
+    public capture(): LayoutSnapshot {
         const nodes = new Map<string, Rect>()
 
         const iframeRect = this.iframe.getBoundingClientRect()

@@ -32,7 +32,6 @@ export class OverlayBarFactory {
 
         this.overlayRoot.appendChild(el)
 
-        // measure size
         const rect = el.getBoundingClientRect()
 
         el.style.display = 'none'
@@ -69,12 +68,10 @@ export class OverlayBarFactory {
             el.style.flexDirection = 'row'
         }
 
-        // apply custom bar style from config
         if (bar.style) {
             Object.assign(el.style, bar.style)
         }
 
-        // create actions
         for (const action of bar.actions) {
             const btn = document.createElement('button')
 
@@ -85,7 +82,7 @@ export class OverlayBarFactory {
             btn.style.justifyContent = 'center'
             btn.style.cursor = 'pointer'
             btn.style.border = 'none'
-            btn.style.background = 'rgba(255,255,255,0.1)'
+            // btn.style.background = 'rgba(255,255,255,0.1)'
             btn.style.color = 'white'
             btn.style.fontSize = '12px'
 

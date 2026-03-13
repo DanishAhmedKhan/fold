@@ -8,7 +8,7 @@ export class OverlayLayoutEngine {
         private barInstances: Map<string, OverlayBarInstance>,
     ) {}
 
-    compute(snapshot: LayoutSnapshot, hoveredId?: string, selectedId?: string): OverlayLayout {
+    public compute(snapshot: LayoutSnapshot, hoveredId?: string, selectedId?: string): OverlayLayout {
         const layout: OverlayLayout = { bars: [] }
 
         const hoverRect = hoveredId ? snapshot.nodes.get(hoveredId) : undefined

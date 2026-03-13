@@ -7,7 +7,7 @@ export class OverlayRenderer {
         private barInstances: Map<string, OverlayBarInstance>,
     ) {}
 
-    render(layout: OverlayLayout) {
+    public render(layout: OverlayLayout) {
         if (layout.hoverRect) this.showBox(this.hoverBox, layout.hoverRect)
         else this.hoverBox.style.display = 'none'
 

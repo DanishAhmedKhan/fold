@@ -26,7 +26,7 @@ export class OverlayManager {
 
     constructor(public editor: Editor, public renderer: IframeRenderer) {}
 
-    mount(container: HTMLElement) {
+    public mount(container: HTMLElement) {
         this.overlayRoot = container
         this.overlayRoot.innerHTML = ''
 
