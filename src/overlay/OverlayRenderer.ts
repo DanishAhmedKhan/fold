@@ -7,21 +7,17 @@ export class OverlayRenderer {
         private barInstances: Map<string, OverlayBarInstance>,
     ) {}
 
-    public render(layout: OverlayLayout) {
-        if (layout.hoverRect) {
-            this.showBox(this.hoverBox, layout.hoverRect)
-        } else {
-            this.hoverBox.style.display = 'none'
-        }
+    render(layout: OverlayLayout) {
+        if (layout.hoverRect) this.showBox(this.hoverBox, layout.hoverRect)
+        else this.hoverBox.style.display = 'none'
 
-        if (layout.selectionRect) {
-            this.showBox(this.selectionBox, layout.selectionRect)
-        } else {
-            this.selectionBox.style.display = 'none'
-        }
+        if (layout.selectionRect) this.showBox(this.selectionBox, layout.selectionRect)
+        else this.selectionBox.style.display = 'none'
+
+        const map = new Map(layout.bars.map((b) => [b.id, b]))
 
         for (const instance of this.barInstances.values()) {
-            const bar = layout.bars.find((b) => b.id === instance.id)
+            const bar = map.get(instance.id)
 
             if (!bar) {
                 instance.element.style.display = 'none'
@@ -29,16 +25,16 @@ export class OverlayRenderer {
             }
 
             instance.element.style.display = 'flex'
-            instance.element.style.left = bar.x + 'px'
-            instance.element.style.top = bar.y + 'px'
+
+            instance.element.style.transform = `translate3d(${bar.x}px,${bar.y}px,0)`
         }
     }
 
     private showBox(el: HTMLElement, rect: Rect) {
         el.style.display = 'block'
 
-        el.style.left = rect.left + 'px'
-        el.style.top = rect.top + 'px'
+        el.style.transform = `translate3d(${rect.left}px,${rect.top}px,0)`
+
         el.style.width = rect.width + 'px'
         el.style.height = rect.height + 'px'
     }

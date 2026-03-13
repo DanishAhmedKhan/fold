@@ -1,17 +1,21 @@
 import { ElementRegistry } from '../elements/ElementRegistry'
 import type { EditorElement } from '../elements/types'
 import { generateId } from '../helper/generateId'
+import { NodeDOMRegistry } from '../overlay/NodeDomRegistry'
 import type { EditorPatch } from './EditorPatch'
 import { EditorStore } from './EditorStore'
 import type { EditorNode } from './types'
 
 export class Editor {
     public store: EditorStore
-    public registry
+
+    public elementRegistry: ElementRegistry
+    public nodeDomRegistry: NodeDOMRegistry
 
     constructor() {
         this.store = new EditorStore()
-        this.registry = new ElementRegistry()
+        this.elementRegistry = new ElementRegistry()
+        this.nodeDomRegistry = new NodeDOMRegistry()
     }
 
     get state() {
@@ -23,7 +27,7 @@ export class Editor {
     }
 
     public addNode(type: string, parentId: string) {
-        const element = this.registry.get(type)
+        const element = this.elementRegistry.get(type)
         if (!element) throw new Error('Element not registered: ' + type)
 
         const id = generateId()
@@ -180,7 +184,7 @@ export class Editor {
     }
 
     public registerElement(element: EditorElement) {
-        this.registry.register(element)
+        this.elementRegistry.register(element)
     }
 
     public setDevice(device: 'desktop' | 'tablet' | 'mobile') {

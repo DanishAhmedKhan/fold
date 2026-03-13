@@ -1,50 +1,24 @@
-import { Editor } from '../core/Editor'
-import { IframeRenderer } from '../renderer/IframeRenderer'
-import type { OverlayBarConfig, OverlayConfig, Position } from './OverlatConfig'
-import type { OverlayBarInstance, OverlayLayout, Rect } from './OverlayTypes'
-
-type Box = {
-    x: number
-    y: number
-    width: number
-    height: number
-}
+import type { OverlayLayout, OverlayBarInstance, LayoutSnapshot, Rect } from './OverlayTypes'
+import type { OverlayConfig, OverlayBarConfig } from './OverlatConfig'
 
 export class OverlayLayoutEngine {
     constructor(
-        private editor: Editor,
-        private iframeRenderer: IframeRenderer,
         private config: OverlayConfig,
         private overlayRoot: HTMLElement,
         private barInstances: Map<string, OverlayBarInstance>,
     ) {}
 
-    public compute(): OverlayLayout {
+    compute(snapshot: LayoutSnapshot, hoveredId?: string, selectedId?: string): OverlayLayout {
         const layout: OverlayLayout = { bars: [] }
 
-        const hoveredId = this.editor.state.hoveredId
-        const selectedIds = this.editor.state.selectedIds
+        const hoverRect = hoveredId ? snapshot.nodes.get(hoveredId) : undefined
 
-        let hoverRect: Rect | undefined
-        let selectionRect: Rect | undefined
+        const selectionRect = selectedId ? snapshot.nodes.get(selectedId) : undefined
 
-        if (hoveredId) {
-            const dom = this.iframeRenderer.getDom(hoveredId)
-            if (dom) {
-                hoverRect = this.getAbsoluteRect(dom)
-                layout.hoverRect = hoverRect
-            }
-        }
+        layout.hoverRect = hoverRect
+        layout.selectionRect = selectionRect
 
-        if (selectedIds?.size) {
-            const id = [...selectedIds][0]
-            const dom = this.iframeRenderer.getDom(id)
-
-            if (dom) {
-                selectionRect = this.getAbsoluteRect(dom)
-                layout.selectionRect = selectionRect
-            }
-        }
+        const canvas = this.overlayRoot.getBoundingClientRect()
 
         for (const instance of this.barInstances.values()) {
             const rect = instance.mode === 'hover' ? hoverRect : selectionRect
@@ -54,7 +28,7 @@ export class OverlayLayoutEngine {
             const bar = this.config.bars.find((b) => b.id === instance.barId)
             if (!bar) continue
 
-            const pos = this.computeBar(bar, rect, instance.element)
+            const pos = this.computeBar(bar, rect, instance, canvas)
 
             layout.bars.push({
                 id: instance.id,
@@ -66,138 +40,24 @@ export class OverlayLayoutEngine {
         return layout
     }
 
-    private computeBar(bar: OverlayBarConfig, rect: Rect, el: HTMLElement) {
-        const canvas = this.overlayRoot.getBoundingClientRect()
-
-        let position = bar.position
-
-        let result = this.computePosition(bar, rect, el, position)
-
-        const overflow = this.isOverflow(result, canvas)
-
-        if (overflow) {
-            const mode = bar.flipMode ?? 'side'
-
-            if (mode === 'offset' || mode === 'both') {
-                const flippedOffset = bar.offset === 'inside' ? 'outside' : 'inside'
-
-                const attempt = this.computePosition({ ...bar, offset: flippedOffset }, rect, el, position)
-
-                if (!this.isOverflow(attempt, canvas)) {
-                    result = attempt
-                }
-            }
-
-            if ((mode === 'side' || mode === 'both') && this.isOverflow(result, canvas)) {
-                position = this.flip(position)
-                result = this.computePosition(bar, rect, el, position)
-            }
+    private computeBar(bar: OverlayBarConfig, rect: Rect, instance: OverlayBarInstance, canvas: DOMRect) {
+        const size = {
+            width: instance.width,
+            height: instance.height,
         }
 
-        result.x = this.clamp(result.x, 0, canvas.width - result.width)
-        result.y = this.clamp(result.y, 0, canvas.height - result.height)
+        let x = rect.left
+        let y = rect.top - size.height
 
-        return result
-    }
+        if (bar.position === 'bottom') y = rect.bottom
 
-    private computePosition(bar: OverlayBarConfig, rect: Rect, el: HTMLElement, position: Position) {
-        const { align, offset, gap = 0 } = bar
+        if (bar.align === 'center') x = rect.left + rect.width / 2 - size.width / 2
 
-        const prevDisplay = el.style.display
+        if (bar.align === 'end') x = rect.right - size.width
 
-        if (prevDisplay === 'none') {
-            el.style.visibility = 'hidden'
-            el.style.display = 'flex'
-        }
+        x = Math.max(0, Math.min(x, canvas.width - size.width))
+        y = Math.max(0, Math.min(y, canvas.height - size.height))
 
-        const size = el.getBoundingClientRect()
-
-        el.style.display = prevDisplay
-        el.style.visibility = ''
-
-        const horizontal = position === 'top' || position === 'bottom'
-
-        let x = 0
-        let y = 0
-
-        if (horizontal) {
-            if (align === 'start') x = rect.left
-            else if (align === 'center') x = rect.left + rect.width / 2 - size.width / 2
-            else if (align === 'end') x = rect.right - size.width
-        } else {
-            if (align === 'start') y = rect.top
-            else if (align === 'center') y = rect.top + rect.height / 2 - size.height / 2
-            else if (align === 'end') y = rect.bottom - size.height
-        }
-
-        if (position === 'top') {
-            if (offset === 'inside') y = rect.top + gap
-            else if (offset === 'outside') y = rect.top - size.height - gap
-            else y = rect.top - size.height / 2
-        }
-
-        if (position === 'bottom') {
-            if (offset === 'inside') y = rect.bottom - size.height - gap
-            else if (offset === 'outside') y = rect.bottom + gap
-            else y = rect.bottom - size.height / 2
-        }
-
-        if (position === 'left') {
-            if (offset === 'inside') x = rect.left + gap
-            else if (offset === 'outside') x = rect.left - size.width - gap
-            else x = rect.left - size.width / 2
-        }
-
-        if (position === 'right') {
-            if (offset === 'inside') x = rect.right - size.width - gap
-            else if (offset === 'outside') x = rect.right + gap
-            else x = rect.right - size.width / 2
-        }
-
-        return {
-            x,
-            y,
-            width: size.width,
-            height: size.height,
-        }
-    }
-
-    private flip(pos: Position): Position {
-        if (pos === 'top') return 'bottom'
-        if (pos === 'bottom') return 'top'
-        if (pos === 'left') return 'right'
-        return 'left'
-    }
-
-    private isOverflow(result: Box, canvas: DOMRect) {
-        return (
-            result.x < 0 ||
-            result.y < 0 ||
-            result.x + result.width > canvas.width ||
-            result.y + result.height > canvas.height
-        )
-    }
-
-    private clamp(x: number, min: number, max: number) {
-        return Math.max(min, Math.min(max, x))
-    }
-
-    private getAbsoluteRect(dom: HTMLElement): Rect {
-        const rect = dom.getBoundingClientRect()
-
-        const iframeRect = this.iframeRenderer.iframe.getBoundingClientRect()
-        const overlayRect = this.overlayRoot.getBoundingClientRect()
-
-        const left = iframeRect.left + rect.left - overlayRect.left
-        const top = iframeRect.top + rect.top - overlayRect.top
-
-        return {
-            left,
-            top,
-            width: rect.width,
-            height: rect.height,
-            right: left + rect.width,
-            bottom: top + rect.height,
-        }
+        return { x, y }
     }
 }

@@ -7,6 +7,7 @@ import { OverlayInteractionManager } from '../interaction/OverlayInteractionMana
 
 export class IframeRenderer {
     public editor: Editor
+
     private overlayInteraction!: OverlayInteractionManager
     private builderInteraction!: IframeInteractionManager
 
@@ -14,7 +15,7 @@ export class IframeRenderer {
     public doc!: Document
     public body!: HTMLElement
 
-    public nodeDomMap = new Map<string, HTMLElement>()
+    // still needed for reverse lookup (DOM -> nodeId)
     public domNodeMap = new WeakMap<HTMLElement, string>()
 
     public unsubscribe?: () => void
@@ -76,7 +77,8 @@ export class IframeRenderer {
     public renderInitialTree() {
         this.body.innerHTML = ''
 
-        this.nodeDomMap.clear()
+        // clear registry on full render
+        this.editor.nodeDomRegistry.clear()
 
         const root = this.editor.getNode(this.editor.state.rootId)
         if (!root) return
@@ -87,13 +89,16 @@ export class IframeRenderer {
     }
 
     public renderNode(node: EditorNode): HTMLElement {
-        const element = this.editor.registry.get(node.type)
+        const element = this.editor.elementRegistry.get(node.type)
 
         const el = element ? element.render(this.doc, node) : this.doc.createElement('div')
 
         el.dataset.nodeId = node.id
 
-        this.nodeDomMap.set(node.id, el)
+        // register node DOM
+        this.editor.nodeDomRegistry.register(node.id, el)
+
+        // reverse lookup
         this.domNodeMap.set(el, node.id)
 
         this.applyStyles(el, node)
@@ -103,6 +108,7 @@ export class IframeRenderer {
             if (!child) return
 
             const childDom = this.renderNode(child)
+
             el.appendChild(childDom)
         })
 
@@ -113,7 +119,7 @@ export class IframeRenderer {
         const node = this.editor.getNode(nodeId)
         if (!node) return
 
-        const parentDom = this.nodeDomMap.get(node.parent!)
+        const parentDom = this.editor.nodeDomRegistry.get(node.parent!)
         if (!parentDom) return
 
         const dom = this.renderNode(node)
@@ -122,12 +128,13 @@ export class IframeRenderer {
     }
 
     public unmountNode(nodeId: string) {
-        const dom = this.nodeDomMap.get(nodeId)
+        const dom = this.editor.nodeDomRegistry.get(nodeId)
         if (!dom) return
 
         dom.remove()
 
-        this.nodeDomMap.delete(nodeId)
+        this.editor.nodeDomRegistry.unregister(nodeId)
+
         this.domNodeMap.delete(dom)
     }
 
@@ -135,8 +142,8 @@ export class IframeRenderer {
         const node = this.editor.getNode(nodeId)
         if (!node) return
 
-        const dom = this.nodeDomMap.get(nodeId)
-        const parentDom = this.nodeDomMap.get(node.parent!)
+        const dom = this.editor.nodeDomRegistry.get(nodeId)
+        const parentDom = this.editor.nodeDomRegistry.get(node.parent!)
 
         if (!dom || !parentDom) return
 
@@ -145,7 +152,7 @@ export class IframeRenderer {
 
     public updateNodeStyles(nodeId: string) {
         const node = this.editor.getNode(nodeId)
-        const dom = this.nodeDomMap.get(nodeId)
+        const dom = this.editor.nodeDomRegistry.get(nodeId)
 
         if (!node || !dom) return
 
@@ -165,12 +172,13 @@ export class IframeRenderer {
     }
 
     public getDom(nodeId: string) {
-        return this.nodeDomMap.get(nodeId) ?? null
+        return this.editor.nodeDomRegistry.get(nodeId) ?? null
     }
 
     public destroy() {
         this.unsubscribe?.()
-        this.nodeDomMap.clear()
+
+        this.editor.nodeDomRegistry.clear()
 
         this.overlayInteraction.destroy()
         this.builderInteraction.destroy()

@@ -12,3 +12,5 @@ export type EditorPatch =
     | { type: 'HOVER_NODE'; nodeId: string | null }
     | { type: 'CLEAR_HOVER' }
     | { type: 'SET_DEVICE'; device: string }
+    | { type: 'SET_CANVAS_WIDTH'; width: number }
+    | { type: 'SET_IS_RESIZING' }

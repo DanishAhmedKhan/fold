@@ -7,6 +7,10 @@ export type Rect = {
     bottom: number
 }
 
+export type LayoutSnapshot = {
+    nodes: Map<string, Rect>
+}
+
 export interface BarLayout {
     id: string
     x: number
@@ -24,4 +28,6 @@ export type OverlayBarInstance = {
     barId: string
     mode: 'hover' | 'selection'
     element: HTMLElement
+    width: number
+    height: number
 }

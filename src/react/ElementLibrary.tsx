@@ -6,7 +6,7 @@ interface Props {
 }
 
 export function ElementLibrary({ editor }: Props) {
-    const elements = editor.registry.getAll()
+    const elements = editor.elementRegistry.getAll()
 
     return (
         <div

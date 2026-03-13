@@ -2,10 +2,12 @@ import { Editor } from '../core/Editor'
 import { IframeRenderer } from '../renderer/IframeRenderer'
 
 import { defaultOverlayConfig } from './defaultOverlayConfig'
-import type { OverlayAction, OverlayBarConfig, OverlayBorderStyle, OverlayConfig } from './OverlatConfig'
 
 import { OverlayLayoutEngine } from './OverlayLayoutEngine'
 import { OverlayRenderer } from './OverlayRenderer'
+import { LayoutSnapshotEngine } from './LayoutSnapshotEngine'
+import { OverlayBarFactory } from './OverlayBarFactory'
+
 import type { OverlayBarInstance } from './OverlayTypes'
 
 export class OverlayManager {
@@ -18,154 +20,49 @@ export class OverlayManager {
 
     private layout!: OverlayLayoutEngine
     private rendererUI!: OverlayRenderer
+    private snapshotEngine!: LayoutSnapshotEngine
 
     private rafId: number | null = null
-    private needsUpdate = true
-    private unsubscribe?: () => void
 
-    private resizeObserver!: ResizeObserver
-    private mutationObserver!: MutationObserver
+    constructor(public editor: Editor, public renderer: IframeRenderer) {}
 
-    private lastHover?: string
-    private lastSelection?: string
-
-    constructor(
-        public editor: Editor,
-        public renderer: IframeRenderer,
-        public config: OverlayConfig = defaultOverlayConfig,
-    ) {}
-
-    public mount(container: HTMLElement) {
+    mount(container: HTMLElement) {
         this.overlayRoot = container
         this.overlayRoot.innerHTML = ''
-
-        this.barInstances.clear()
 
         this.overlayRoot.style.position = 'absolute'
         this.overlayRoot.style.inset = '0'
         this.overlayRoot.style.pointerEvents = 'none'
 
         this.createBoxes()
-        this.createBars()
 
-        this.layout = new OverlayLayoutEngine(
-            this.editor,
-            this.renderer,
-            this.config,
+        const factory = new OverlayBarFactory(defaultOverlayConfig, this.overlayRoot, this.barInstances)
+
+        factory.createBars()
+
+        this.snapshotEngine = new LayoutSnapshotEngine(
+            this.editor.nodeDomRegistry,
+            this.renderer.iframe,
             this.overlayRoot,
-            this.barInstances,
         )
+
+        this.layout = new OverlayLayoutEngine(defaultOverlayConfig, this.overlayRoot, this.barInstances)
 
         this.rendererUI = new OverlayRenderer(this.hoverBox, this.selectionBox, this.barInstances)
 
-        this.unsubscribe = this.editor.subscribe(() => this.requestUpdate())
-
-        this.observeLayout()
         this.startLoop()
-    }
-
-    private createBoxes() {
-        const create = (border?: OverlayBorderStyle) => {
-            const el = document.createElement('div')
-
-            el.style.position = 'absolute'
-            el.style.pointerEvents = 'none'
-
-            if (border) {
-                el.style.borderColor = border.color || ''
-                el.style.borderStyle = border.style!
-                el.style.borderWidth = border.width! + 'px'
-            }
-
-            this.overlayRoot.appendChild(el)
-
-            return el
-        }
-
-        this.hoverBox = create(this.config.hover)
-        this.selectionBox = create(this.config.selection)
-    }
-
-    private createBars() {
-        for (const bar of this.config.bars) {
-            const visibility = {
-                hover: bar.visibility?.hover ?? true,
-                selection: bar.visibility?.selection ?? true,
-            }
-
-            if (visibility.hover) {
-                this.createBarInstance(bar, 'hover')
-            }
-
-            if (visibility.selection) {
-                this.createBarInstance(bar, 'selection')
-            }
-        }
-    }
-
-    private createBarInstance(bar: OverlayBarConfig, mode: 'hover' | 'selection') {
-        const el = this.createBarElement(bar)
-
-        const id = `${bar.id}-${mode}`
-
-        this.overlayRoot.appendChild(el)
-
-        this.barInstances.set(id, {
-            id,
-            barId: bar.id,
-            mode,
-            element: el,
-        })
-    }
-
-    private createBarElement(bar: OverlayBarConfig) {
-        const el = document.createElement('div')
-
-        el.style.position = 'absolute'
-        el.style.pointerEvents = 'auto'
-        el.style.display = 'none'
-
-        el.style.color = 'white'
-        el.style.padding = '2px 6px'
-        el.style.gap = '4px'
-        el.style.fontSize = '12px'
-        el.style.display = 'flex'
-
-        if (bar.orientation === 'vertical') {
-            el.style.flexDirection = 'column'
-        } else {
-            el.style.flexDirection = 'row'
-        }
-
-        Object.assign(el.style, bar.style)
-
-        return el
     }
 
     private startLoop() {
         const loop = () => {
-            if (this.needsUpdate) {
-                const selectedIds = this.editor.state.selectedIds
-                const hoveredId = this.editor.state.hoveredId
+            const snapshot = this.snapshotEngine.capture()
 
-                const selectedNode = selectedIds?.size ? [...selectedIds][0] : undefined
+            const hovered = this.editor.state.hoveredId
+            const selected = [...this.editor.state.selectedIds][0]
 
-                if (hoveredId !== this.lastHover) {
-                    this.renderBars('hover', hoveredId)
-                    this.lastHover = hoveredId
-                }
+            const layout = this.layout.compute(snapshot, hovered, selected)
 
-                if (selectedNode !== this.lastSelection) {
-                    this.renderBars('selection', selectedNode)
-                    this.lastSelection = selectedNode
-                }
-
-                const layout = this.layout.compute()
-
-                this.rendererUI.render(layout)
-
-                this.needsUpdate = false
-            }
+            this.rendererUI.render(layout)
 
             this.rafId = requestAnimationFrame(loop)
         }
@@ -173,102 +70,27 @@ export class OverlayManager {
         loop()
     }
 
-    private renderBars(mode: 'hover' | 'selection', nodeId?: string) {
-        for (const instance of this.barInstances.values()) {
-            if (instance.mode === mode) {
-                instance.element.style.display = 'none'
-            }
+    private createBoxes() {
+        const create = () => {
+            const el = document.createElement('div')
+
+            el.style.position = 'absolute'
+            el.style.pointerEvents = 'none'
+            el.style.boxSizing = 'border-box'
+
+            this.overlayRoot.appendChild(el)
+
+            return el
         }
 
-        if (!nodeId) return
+        this.hoverBox = create()
+        this.selectionBox = create()
 
-        for (const instance of this.barInstances.values()) {
-            if (instance.mode !== mode) continue
-
-            const barConfig = this.config.bars.find((b) => b.id === instance.barId)
-            if (!barConfig) continue
-
-            const el = instance.element
-            const actions = barConfig.actions ?? []
-
-            el.innerHTML = ''
-
-            actions.forEach((action) => {
-                const btn = this.createActionElement(action, nodeId)
-                el.appendChild(btn)
-            })
-
-            el.style.display = 'flex'
-
-            if (mode === 'hover') {
-                el.style.background = this.config.hover.color
-            } else {
-                el.style.background = this.config.selection.color
-            }
-        }
+        this.hoverBox.style.border = '1px dashed #999'
+        this.selectionBox.style.border = '2px solid #3b82f6'
     }
 
-    private createActionElement(action: OverlayAction, nodeId: string) {
-        const btn = document.createElement('button')
-
-        btn.style.background = 'transparent'
-        btn.style.border = 'none'
-        btn.style.color = 'white'
-        btn.style.cursor = 'pointer'
-        btn.style.fontSize = '12px'
-        btn.style.padding = '2px'
-
-        if (action.icon) {
-            if (typeof action.icon === 'string') {
-                btn.textContent = action.icon
-            } else {
-                btn.appendChild(action.icon)
-            }
-        } else if (action.label) {
-            btn.textContent = action.label
-        }
-
-        if (action.tooltip) {
-            btn.title = action.tooltip
-        }
-
-        btn.onclick = (e) => {
-            e.stopPropagation()
-            action.onClick?.(this.editor, nodeId)
-        }
-
-        return btn
-    }
-
-    public requestUpdate() {
-        this.needsUpdate = true
-    }
-
-    private observeLayout() {
-        const doc = this.renderer.doc
-
-        doc.addEventListener('scroll', () => this.requestUpdate(), true)
-
-        window.addEventListener('resize', () => this.requestUpdate())
-
-        this.resizeObserver = new ResizeObserver(() => this.requestUpdate())
-        this.resizeObserver.observe(this.renderer.body)
-
-        this.mutationObserver = new MutationObserver(() => this.requestUpdate())
-
-        this.mutationObserver.observe(this.renderer.body, {
-            attributes: true,
-            childList: true,
-            subtree: true,
-        })
-    }
-
-    public destroy() {
-        this.unsubscribe?.()
-
-        this.resizeObserver?.disconnect()
-        this.mutationObserver?.disconnect()
-
+    destroy() {
         if (this.rafId) cancelAnimationFrame(this.rafId)
     }
 }
