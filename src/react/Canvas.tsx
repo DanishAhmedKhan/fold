@@ -21,14 +21,18 @@ export function Canvas({ editor }: { editor: Editor }) {
 
         const overlay = new OverlayManager(editor, renderer)
         overlay.mount(overlayRef.current!)
+
+        return () => {
+            renderer.destroy()
+        }
     }, [editor])
 
     return (
         <div
             style={{
                 flex: 1,
-                overflowY: 'auto',
-                overflowX: 'hidden',
+                // overflowY: 'auto',
+                // overflowX: 'hidden',
                 background: '#f3f3f3',
                 display: 'flex',
                 justifyContent: 'center',

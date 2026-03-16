@@ -2,6 +2,8 @@ import { Editor } from '../core/Editor'
 import { dragState } from '../core/DragState'
 import { SelectionBoxController } from '../interaction/SelectionBoxController'
 
+const mountedDocs = new WeakSet<Document>()
+
 export class IframeInteractionManager {
     public editor: Editor
     public doc!: Document
@@ -16,15 +18,27 @@ export class IframeInteractionManager {
     public mount(doc: Document) {
         this.doc = doc
 
-        this.doc.addEventListener('dragover', this.handleDragOver)
-        this.doc.addEventListener('drop', this.handleDrop)
+        if (mountedDocs.has(doc)) {
+            this.cleanup(doc)
+        }
+
+        doc.addEventListener('dragover', this.handleDragOver)
+        doc.addEventListener('drop', this.handleDrop)
+
+        mountedDocs.add(doc)
 
         this.selectionBox.mount(doc)
     }
 
+    private cleanup(doc: Document) {
+        doc.removeEventListener('dragover', this.handleDragOver)
+        doc.removeEventListener('drop', this.handleDrop)
+    }
+
     public destroy() {
-        this.doc.removeEventListener('dragover', this.handleDragOver)
-        this.doc.removeEventListener('drop', this.handleDrop)
+        this.cleanup(this.doc)
+
+        mountedDocs.delete(this.doc)
 
         this.selectionBox.destroy()
     }
@@ -39,13 +53,13 @@ export class IframeInteractionManager {
         const type = dragState.type
         if (!type) return
 
-        const target = e.target as HTMLElement
+        dragState.type = null
+
+        const target = e.target as Element
 
         const parent = target.closest('[data-node-id]') as HTMLElement | null
         const parentId = parent?.dataset.nodeId || this.editor.state.rootId
 
         this.editor.addNode(type, parentId)
-
-        dragState.type = null
     }
 }
