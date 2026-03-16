@@ -1,3 +1,4 @@
+import { BuiltInElements } from '../elements/defaultElements'
 import { ElementRegistry } from '../elements/ElementRegistry'
 import type { EditorElement } from '../elements/types'
 import { generateId } from '../helper/generateId'
@@ -28,6 +29,10 @@ export class Editor {
         this.properties = new PropertyManager(this)
 
         this.restoreViewportDevice()
+
+        for (const elements of BuiltInElements) {
+            this.registerElement(elements)
+        }
     }
 
     get state() {

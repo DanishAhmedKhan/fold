@@ -30,6 +30,8 @@ export function Canvas({ editor }: { editor: Editor }) {
                 background: '#f3f3f3',
                 display: 'flex',
                 justifyContent: 'center',
+                alignItems: 'stretch',
+                minHeight: 0,
             }}
         >
             <div
@@ -38,15 +40,20 @@ export function Canvas({ editor }: { editor: Editor }) {
                     width: device === 'responsive' ? '100%' : width,
                     position: 'relative',
                     background: 'white',
+                    overflow: 'hidden',
                     transition: isResizing ? 'none' : 'width 0.2s ease',
+                    minHeight: '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
                 }}
             >
                 <iframe
                     ref={iframeRef}
                     style={{
                         width: '100%',
-                        height: '100vh',
+                        flex: 1,
                         border: 'none',
+                        display: 'block',
                     }}
                 />
 
@@ -58,6 +65,7 @@ export function Canvas({ editor }: { editor: Editor }) {
                         position: 'absolute',
                         inset: 0,
                         pointerEvents: 'none',
+                        overflow: 'visible',
                     }}
                 />
             </div>

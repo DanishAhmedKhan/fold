@@ -86,3 +86,5 @@ export const BoxElement: EditorElement = {
         return el
     },
 }
+
+export const BuiltInElements = [TextElement, ButtonElement, BoxElement]
