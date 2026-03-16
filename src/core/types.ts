@@ -1,5 +1,9 @@
-export interface NodeStyles {
-    [key: string]: string
+export type StyleMap = Record<string, string>
+
+export type ResponsiveStyles = {
+    desktop?: StyleMap
+    tablet?: StyleMap
+    mobile?: StyleMap
 }
 
 export interface EditorNode {
@@ -11,7 +15,7 @@ export interface EditorNode {
 
     props: Record<string, string>
 
-    styles: NodeStyles
+    styles: ResponsiveStyles
 }
 
 export interface EditorViewport {

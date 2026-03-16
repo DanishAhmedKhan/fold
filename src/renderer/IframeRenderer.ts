@@ -1,12 +1,15 @@
 import { Editor } from '../core/Editor'
 import { IframeInteractionManager } from '../interaction/IframeInteractionManager'
 import { iframeTemplate } from './iframeTemplate'
+import { IframeStyleSheetManager } from './IframeStyleSheetManager'
 import type { EditorNode } from '../core/types'
 import type { EditorPatch } from '../core/EditorPatch'
 import { OverlayInteractionManager } from '../interaction/OverlayInteractionManager'
 
 export class IframeRenderer {
     public editor: Editor
+
+    private styles = new IframeStyleSheetManager()
 
     private overlayInteraction!: OverlayInteractionManager
     private builderInteraction!: IframeInteractionManager
@@ -39,6 +42,8 @@ export class IframeRenderer {
 
         this.doc = doc
         this.body = doc.body
+
+        this.styles.mount(doc)
 
         this.renderInitialTree()
         this.subscribeToEditor()
@@ -97,7 +102,10 @@ export class IframeRenderer {
 
         this.domNodeMap.set(el, node.id)
 
-        this.applyStyles(el, node)
+        // this.applyStyles(el, node)
+
+        el.classList.add(`fe-node-${node.id}`)
+        this.styles.updateNodeStyles(node.id, node.styles)
 
         node.children.forEach((childId) => {
             const child = this.editor.getNode(childId)
@@ -123,11 +131,24 @@ export class IframeRenderer {
         parentDom.appendChild(dom)
     }
 
+    // public unmountNode(nodeId: string) {
+    //     const dom = this.editor.nodeDomRegistry.get(nodeId)
+    //     if (!dom) return
+
+    //     dom.remove()
+
+    //     this.editor.nodeDomRegistry.unregister(nodeId)
+
+    //     this.domNodeMap.delete(dom)
+    // }
+
     public unmountNode(nodeId: string) {
         const dom = this.editor.nodeDomRegistry.get(nodeId)
         if (!dom) return
 
         dom.remove()
+
+        this.styles.removeNodeStyles(nodeId)
 
         this.editor.nodeDomRegistry.unregister(nodeId)
 
@@ -152,19 +173,13 @@ export class IframeRenderer {
 
         if (!node || !dom) return
 
-        Object.entries(node.styles || {}).forEach(([key, value]) => {
-            if (dom.style.getPropertyValue(key) !== value) {
-                dom.style.setProperty(key, value)
-            }
-        })
-    }
+        // Object.entries(node.styles || {}).forEach(([key, value]) => {
+        //     if (dom.style.getPropertyValue(key) !== value) {
+        //         dom.style.setProperty(key, value)
+        //     }
+        // })
 
-    public applyStyles(el: HTMLElement, node: EditorNode) {
-        const styles = node.styles || {}
-
-        Object.entries(styles).forEach(([key, value]) => {
-            el.style.setProperty(key, value)
-        })
+        this.styles.updateNodeStyles(nodeId, node.styles)
     }
 
     public getDom(nodeId: string) {

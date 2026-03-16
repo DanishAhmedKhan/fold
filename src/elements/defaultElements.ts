@@ -12,7 +12,14 @@ export const TextElement: EditorElement = {
                 text: 'Edit text',
             },
             styles: {
-                padding: '10px',
+                desktop: {
+                    padding: '10px',
+                    fontSize: '20px',
+                },
+
+                mobile: {
+                    fontSize: '10px',
+                },
             },
         }
     },
@@ -37,11 +44,13 @@ export const ButtonElement: EditorElement = {
                 label: 'Button',
             },
             styles: {
-                display: 'flex',
-                justifyContent: 'center',
-                padding: '10px',
-                color: 'white',
-                background: 'black',
+                desktop: {
+                    display: 'flex',
+                    justifyContent: 'center',
+                    padding: '10px',
+                    color: 'white',
+                    background: 'black',
+                },
             },
         }
     },
@@ -63,8 +72,10 @@ export const BoxElement: EditorElement = {
     create() {
         return {
             styles: {
-                padding: '100px',
-                border: '1px solid #eee',
+                desktop: {
+                    padding: '100px',
+                    border: '1px solid #eee',
+                },
             },
         }
     },
