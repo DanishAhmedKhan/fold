@@ -2,9 +2,13 @@ import { ElementRegistry } from '../elements/ElementRegistry'
 import type { EditorElement } from '../elements/types'
 import { generateId } from '../helper/generateId'
 import { NodeDOMRegistry } from '../overlay/NodeDomRegistry'
+import { PropertyControlRegistry } from '../properties/PropertyControlRegistry'
+import { PropertyManager } from '../properties/PropertyManager'
 import type { EditorPatch } from './EditorPatch'
 import { EditorStore } from './EditorStore'
 import type { EditorNode } from './types'
+
+const VIEWPORT_STORAGE_KEY = 'fold-editor-viewport-device'
 
 export class Editor {
     public store: EditorStore
@@ -12,10 +16,18 @@ export class Editor {
     public elementRegistry: ElementRegistry
     public nodeDomRegistry: NodeDOMRegistry
 
+    public properties: PropertyManager
+    public controls: PropertyControlRegistry
+
     constructor() {
         this.store = new EditorStore()
         this.elementRegistry = new ElementRegistry()
         this.nodeDomRegistry = new NodeDOMRegistry()
+
+        this.controls = new PropertyControlRegistry()
+        this.properties = new PropertyManager(this)
+
+        this.restoreViewportDevice()
     }
 
     get state() {
@@ -197,17 +209,37 @@ export class Editor {
         this.state.viewport.device = device
         this.state.viewport.width = widths[device]
 
+        localStorage.setItem(VIEWPORT_STORAGE_KEY, device)
+
         this.store.emit({ type: 'SET_DEVICE', device })
     }
 
     public setResponsiveMode() {
         this.state.viewport.device = 'responsive'
+
+        localStorage.setItem(VIEWPORT_STORAGE_KEY, 'responsive')
+
         this.store.emit({ type: 'SET_DEVICE', device: 'responsive' })
     }
 
     public setCanvasWidth(width: number) {
         this.state.viewport.width = width
         this.store.emit({ type: 'SET_CANVAS_WIDTH', width })
+    }
+
+    private restoreViewportDevice() {
+        const saved = localStorage.getItem(VIEWPORT_STORAGE_KEY)
+
+        if (!saved) return
+
+        if (saved === 'responsive') {
+            this.setResponsiveMode()
+            return
+        }
+
+        if (saved === 'desktop' || saved === 'tablet' || saved === 'mobile') {
+            this.setDevice(saved)
+        }
     }
 
     public setIsResizing(isResizing: boolean) {
