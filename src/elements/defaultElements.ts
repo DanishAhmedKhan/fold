@@ -14,7 +14,7 @@ export const TextElement: EditorElement = {
             styles: {
                 desktop: {
                     padding: '10px',
-                    fontSize: '20px',
+                    fontSize: '40px',
                 },
 
                 mobile: {
