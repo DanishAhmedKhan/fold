@@ -15,7 +15,6 @@ export class IframeRenderer {
     public doc!: Document
     public body!: HTMLElement
 
-    // still needed for reverse lookup (DOM -> nodeId)
     public domNodeMap = new WeakMap<HTMLElement, string>()
 
     public unsubscribe?: () => void
@@ -77,7 +76,6 @@ export class IframeRenderer {
     public renderInitialTree() {
         this.body.innerHTML = ''
 
-        // clear registry on full render
         this.editor.nodeDomRegistry.clear()
 
         const root = this.editor.getNode(this.editor.state.rootId)
@@ -95,10 +93,8 @@ export class IframeRenderer {
 
         el.dataset.nodeId = node.id
 
-        // register node DOM
         this.editor.nodeDomRegistry.register(node.id, el)
 
-        // reverse lookup
         this.domNodeMap.set(el, node.id)
 
         this.applyStyles(el, node)

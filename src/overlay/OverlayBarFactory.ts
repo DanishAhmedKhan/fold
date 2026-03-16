@@ -72,21 +72,25 @@ export class OverlayBarFactory {
             Object.assign(el.style, bar.style)
         }
 
-        for (const action of bar.actions) {
+        for (const action of bar.actions ?? []) {
             const btn = document.createElement('button')
 
-            btn.style.height = '22px'
-            btn.style.minWidth = '22px'
             btn.style.display = 'flex'
             btn.style.alignItems = 'center'
             btn.style.justifyContent = 'center'
             btn.style.cursor = 'pointer'
             btn.style.border = 'none'
-            // btn.style.background = 'rgba(255,255,255,0.1)'
+            btn.style.background = 'transparent'
             btn.style.color = 'white'
             btn.style.fontSize = '12px'
 
-            if (action.icon) btn.textContent = action.icon
+            if (action.icon) {
+                if (typeof action.icon === 'string') {
+                    btn.textContent = action.icon
+                } else {
+                    btn.appendChild(action.icon)
+                }
+            }
             if (action.label) btn.textContent = action.label
             if (action.tooltip) btn.title = action.tooltip
 

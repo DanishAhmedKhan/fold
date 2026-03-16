@@ -23,8 +23,6 @@ export const defaultOverlayConfig: OverlayConfig = {
 
             orientation: 'horizontal',
 
-            flipMode: 'both',
-
             actions: [
                 {
                     id: 'move',
