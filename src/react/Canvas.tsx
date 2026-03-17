@@ -13,7 +13,6 @@ export function Canvas({ editor }: { editor: Editor }) {
     const width = state.viewport.width
     const device = state.viewport.device
     const isResizing = state.viewport.isResizing
-    console.log(device)
 
     useEffect(() => {
         const renderer = new IframeRenderer(editor)
@@ -31,8 +30,6 @@ export function Canvas({ editor }: { editor: Editor }) {
         <div
             style={{
                 flex: 1,
-                // overflowY: 'auto',
-                // overflowX: 'hidden',
                 background: '#f3f3f3',
                 display: 'flex',
                 justifyContent: 'center',
@@ -70,6 +67,7 @@ export function Canvas({ editor }: { editor: Editor }) {
                         position: 'absolute',
                         inset: 0,
                         pointerEvents: 'none',
+                        overflow: 'hidden',
                     }}
                 />
             </div>

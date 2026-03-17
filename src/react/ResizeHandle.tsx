@@ -3,7 +3,6 @@ import { useEditorState } from '../core/useEditorState'
 import type { Editor } from '../core/Editor'
 
 export function ResizeHandle({ editor }: { editor: Editor }) {
-    console.log('handle')
     const state = useEditorState(editor)
     const device = state.viewport.device
 
