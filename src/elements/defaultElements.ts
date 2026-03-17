@@ -87,4 +87,84 @@ export const BoxElement: EditorElement = {
     },
 }
 
-export const BuiltInElements = [TextElement, ButtonElement, BoxElement]
+export const RowElement: EditorElement = {
+    type: 'row',
+    name: 'Row',
+
+    create() {
+        return {
+            props: {
+                columns: 2,
+            },
+            styles: {
+                desktop: {
+                    display: 'flex',
+                    gap: '10px',
+                },
+            },
+        }
+    },
+
+    render(doc, node, ctx) {
+        const el = doc.createElement('div')
+
+        node.children.forEach((childId) => {
+            const childEl = ctx.renderNode(childId)
+            el.appendChild(childEl)
+        })
+
+        return el
+    },
+}
+
+export const ColumnElement: EditorElement = {
+    type: 'column',
+    name: 'Column',
+
+    create() {
+        return {
+            props: {},
+            styles: {
+                desktop: {
+                    flex: '1',
+                    minHeight: '50px',
+                },
+            },
+        }
+    },
+
+    render(doc, node, ctx) {
+        const el = doc.createElement('div')
+
+        node.children.forEach((childId) => {
+            const childEl = ctx.renderNode(childId)
+            el.appendChild(childEl)
+        })
+
+        return el
+    },
+}
+
+export const SectionElement: EditorElement = {
+    type: '2-col-section',
+    name: '2 Column Section',
+
+    create() {
+        return {
+            children: ['row'],
+        }
+    },
+
+    render(doc, node, ctx) {
+        const el = doc.createElement('div')
+
+        node.children.forEach((childId) => {
+            const childEl = ctx.renderNode(childId)
+            el.appendChild(childEl)
+        })
+
+        return el
+    },
+}
+
+export const BuiltInElements = [TextElement, ButtonElement, BoxElement, RowElement, ColumnElement, SectionElement]

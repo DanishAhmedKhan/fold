@@ -51,7 +51,7 @@ export class Editor {
 
         const defaults = element.create()
 
-        const node = {
+        const node: EditorNode = {
             id,
             type,
             parent: parentId,
@@ -61,6 +61,13 @@ export class Editor {
         }
 
         this.state.nodes[id] = node
+
+        if (defaults.children?.length) {
+            defaults.children.forEach((childType: string) => {
+                const child = this.addNode(childType, id)
+                node.children.push(child.id)
+            })
+        }
 
         const parent = this.state.nodes[parentId]
         parent.children.push(id)

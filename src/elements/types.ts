@@ -1,3 +1,4 @@
+import type { Editor } from '../core/Editor'
 import type { EditorNode } from '../core/types'
 
 export interface ElementProperty {
@@ -20,7 +21,15 @@ export interface EditorElement {
 
     create(): Partial<EditorNode>
 
-    render(doc: Document, node: EditorNode): HTMLElement
+    // render(doc: Document, node: EditorNode): HTMLElement
+    render(
+        doc: Document,
+        node: EditorNode,
+        ctx: {
+            editor: Editor
+            renderNode: (id: string) => HTMLElement
+        },
+    ): HTMLElement
 
     properties?: ElementProperty[]
 }
