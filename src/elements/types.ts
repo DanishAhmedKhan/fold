@@ -21,15 +21,17 @@ export interface EditorElement {
 
     create(): Partial<EditorNode>
 
-    // render(doc: Document, node: EditorNode): HTMLElement
-    render(
-        doc: Document,
-        node: EditorNode,
-        ctx: {
-            editor: Editor
-            renderNode: (id: string) => HTMLElement
-        },
-    ): HTMLElement
+    render(doc: Document, node: EditorNode, ctx: RenderContext): HTMLElement
 
     properties?: ElementProperty[]
+
+    handlesChildren?: boolean
+}
+
+type RenderContext = {
+    editor: Editor
+
+    renderNode: (node: EditorNode) => HTMLElement
+
+    appendChildren: (el: HTMLElement, node: EditorNode) => void
 }

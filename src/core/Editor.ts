@@ -69,8 +69,8 @@ export class Editor {
             })
         }
 
-        const parent = this.state.nodes[parentId]
-        parent.children.push(id)
+        const parentNode = this.state.nodes[parentId]
+        parentNode.children.push(id)
 
         this.store.emit({ type: 'ADD_NODE', nodeId: id })
 

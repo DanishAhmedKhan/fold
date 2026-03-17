@@ -151,6 +151,12 @@ export const SectionElement: EditorElement = {
 
     create() {
         return {
+            styles: {
+                desktop: {
+                    padding: '100px',
+                    border: '1px solid red',
+                },
+            },
             children: ['row'],
         }
     },

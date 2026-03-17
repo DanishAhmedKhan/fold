@@ -93,6 +93,9 @@ export class IframeRenderer {
 
     public renderNode(node: EditorNode): HTMLElement {
         const element = this.editor.elementRegistry.get(node.type)
+        if (!element) {
+            throw new Error('Element not found: ' + node.type)
+        }
 
         const el = element ? element.render(this.doc, node) : this.doc.createElement('div')
 
@@ -101,8 +104,6 @@ export class IframeRenderer {
         this.editor.nodeDomRegistry.register(node.id, el)
 
         this.domNodeMap.set(el, node.id)
-
-        // this.applyStyles(el, node)
 
         el.classList.add(`fe-node-${node.id}`)
         this.styles.updateNodeStyles(node.id, node.styles)
@@ -130,17 +131,6 @@ export class IframeRenderer {
 
         parentDom.appendChild(dom)
     }
-
-    // public unmountNode(nodeId: string) {
-    //     const dom = this.editor.nodeDomRegistry.get(nodeId)
-    //     if (!dom) return
-
-    //     dom.remove()
-
-    //     this.editor.nodeDomRegistry.unregister(nodeId)
-
-    //     this.domNodeMap.delete(dom)
-    // }
 
     public unmountNode(nodeId: string) {
         const dom = this.editor.nodeDomRegistry.get(nodeId)
@@ -172,12 +162,6 @@ export class IframeRenderer {
         const dom = this.editor.nodeDomRegistry.get(nodeId)
 
         if (!node || !dom) return
-
-        // Object.entries(node.styles || {}).forEach(([key, value]) => {
-        //     if (dom.style.getPropertyValue(key) !== value) {
-        //         dom.style.setProperty(key, value)
-        //     }
-        // })
 
         this.styles.updateNodeStyles(nodeId, node.styles)
     }
