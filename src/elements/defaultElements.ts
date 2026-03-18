@@ -1,28 +1,8 @@
 import type { EditorElement } from './types'
 import type { EditorNode } from '../core/types'
 
-// export const RootElement: EditorElement = {
-//     type: 'root',
-//     name: 'Root',
-
-//     create() {
-//         return {}
-//     },
-
-//     render(doc, node, ctx) {
-//         const el = doc.createElement('div')
-
-//         el.style.minHeight = '100vh'
-
-//         ctx.appendChildren(el, node)
-
-//         return el
-//     },
-// }
-
 export const TextElement: EditorElement = {
     type: 'text',
-
     name: 'Text',
 
     create() {
@@ -45,16 +25,13 @@ export const TextElement: EditorElement = {
 
     render(doc: Document, node: EditorNode) {
         const el = doc.createElement('div')
-
         el.innerText = node.props.text
-
         return el
     },
 }
 
 export const ButtonElement: EditorElement = {
     type: 'button',
-
     name: 'Button',
 
     create() {
@@ -76,9 +53,7 @@ export const ButtonElement: EditorElement = {
 
     render(doc: Document, node: EditorNode) {
         const el = doc.createElement('div')
-
         el.innerText = node.props.label
-
         return el
     },
 }
@@ -101,7 +76,6 @@ export const BoxElement: EditorElement = {
 
     render(doc: Document) {
         const el = doc.createElement('div')
-
         return el
     },
 }
@@ -114,20 +88,17 @@ export const RowElement: EditorElement = {
         return {
             styles: {
                 desktop: {
-                    display: 'flex',
-                    gap: '10px',
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(2, 1fr)',
+                    gap: '30px',
                 },
             },
             children: ['column', 'column'],
         }
     },
 
-    render(doc, node, ctx) {
-        const el = doc.createElement('div')
-
-        ctx.appendChildren(el, node)
-
-        return el
+    render(doc) {
+        return doc.createElement('div')
     },
 }
 
@@ -140,7 +111,6 @@ export const ColumnElement: EditorElement = {
             props: {},
             styles: {
                 desktop: {
-                    flex: '1',
                     minHeight: '50px',
                 },
             },
@@ -148,9 +118,7 @@ export const ColumnElement: EditorElement = {
     },
 
     render(doc) {
-        const el = doc.createElement('div')
-
-        return el
+        return doc.createElement('div')
     },
 }
 
@@ -162,10 +130,8 @@ export const SectionElement: EditorElement = {
         return {
             styles: {
                 desktop: {
-                    display: 'grid',
                     padding: '100px',
-                    gridTemplateColumns: 'repeat(2, 1fr)',
-                    border: '1px solid red',
+                    background: 'aliceblue',
                 },
             },
             children: ['row'],
@@ -173,8 +139,7 @@ export const SectionElement: EditorElement = {
     },
 
     render(doc) {
-        const el = doc.createElement('div')
-        return el
+        return doc.createElement('div')
     },
 }
 

@@ -7,7 +7,7 @@ import { PropertyControlRegistry } from '../properties/PropertyControlRegistry'
 import { PropertyManager } from '../properties/PropertyManager'
 import type { EditorPatch } from './EditorPatch'
 import { EditorStore } from './EditorStore'
-import type { EditorNode } from './types'
+import type { EditorNode, ResponsiveStyles } from './types'
 
 const VIEWPORT_STORAGE_KEY = 'fold-editor-viewport-device'
 
@@ -43,14 +43,11 @@ export class Editor {
         return this.state.nodes[id]
     }
 
-    public addNode(type: string, parentId: string) {
-        console.log(this.state.nodes)
-
+    public addNode(type: string, parentId: string, silent = false) {
         const element = this.elementRegistry.get(type)
         if (!element) throw new Error('Element not registered: ' + type)
 
         const id = generateId()
-
         const defaults = element.create()
 
         const node: EditorNode = {
@@ -64,17 +61,18 @@ export class Editor {
 
         this.state.nodes[id] = node
 
-        if (defaults.children?.length) {
-            defaults.children.forEach((childType: string) => {
-                const child = this.addNode(childType, id)
-                node.children.push(child.id)
-            })
-        }
-
         const parentNode = this.state.nodes[parentId]
         parentNode.children.push(id)
 
-        this.store.emit({ type: 'ADD_NODE', nodeId: id })
+        if (defaults.children?.length) {
+            defaults.children.forEach((childType: string) => {
+                this.addNode(childType, id, true)
+            })
+        }
+
+        if (!silent) {
+            this.store.emit({ type: 'ADD_NODE', nodeId: id })
+        }
 
         return node
     }
@@ -107,11 +105,15 @@ export class Editor {
         delete this.state.nodes[nodeId]
     }
 
-    public updateStyle(nodeId: string, key: string, value: string) {
+    public updateStyle(nodeId: string, device: keyof ResponsiveStyles, key: string, value: string) {
         const node = this.state.nodes[nodeId]
         if (!node) return
 
-        node.styles[key] = value
+        if (!node.styles[device]) {
+            node.styles[device] = {}
+        }
+
+        node.styles[device]![key] = value
 
         this.store.emit({ type: 'UPDATE_STYLE', nodeId })
     }
@@ -120,12 +122,16 @@ export class Editor {
         const node = this.state.nodes[nodeId]
         if (!node) return
 
-        delete node.styles[key]
+        const device = this.state.viewport.device as keyof ResponsiveStyles
+
+        const styles = node.styles[device]
+        if (!styles) return
+
+        delete styles[key]
 
         this.store.emit({ type: 'REMOVE_STYLE', nodeId })
     }
-
-    public updateProp(nodeId: string, key: string, value: unknown) {
+    public updateProp(nodeId: string, key: string, value: string) {
         const node = this.state.nodes[nodeId]
         if (!node) return
 

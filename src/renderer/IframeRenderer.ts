@@ -5,6 +5,7 @@ import { IframeStyleSheetManager } from './IframeStyleSheetManager'
 import type { EditorNode } from '../core/types'
 import type { EditorPatch } from '../core/EditorPatch'
 import { OverlayInteractionManager } from '../interaction/OverlayInteractionManager'
+import type { RenderContext } from '../elements/types'
 
 export class IframeRenderer {
     public editor: Editor
@@ -91,45 +92,18 @@ export class IframeRenderer {
         this.body.appendChild(dom)
     }
 
-    public renderNode2(node: EditorNode): HTMLElement {
-        const element = this.editor.elementRegistry.get(node.type)
-        // if (!element) {
-        //     throw new Error('Element not found: ' + node.type)
-        // }
-
-        const el = element ? element.render(this.doc, node) : this.doc.createElement('div')
-
-        el.dataset.nodeId = node.id
-
-        this.editor.nodeDomRegistry.register(node.id, el)
-
-        this.domNodeMap.set(el, node.id)
-
-        el.classList.add(`fe-node-${node.id}`)
-        this.styles.updateNodeStyles(node.id, node.styles)
-
-        node.children.forEach((childId) => {
-            const child = this.editor.getNode(childId)
-            if (!child) return
-
-            const childDom = this.renderNode(child)
-
-            el.appendChild(childDom)
-        })
-
-        return el
-    }
-
     public renderNode = (node: EditorNode): HTMLElement => {
         const element = this.editor.elementRegistry.get(node.type)
 
         let childrenHandled = false
 
-        const ctx = {
+        const ctx: RenderContext = {
             editor: this.editor,
 
-            renderNode: (childNode: EditorNode) => {
-                return this.renderNode(childNode)
+            renderNode: (childId: string) => {
+                const child = this.editor.getNode(childId)
+                if (!child) throw new Error('Child not found')
+                return this.renderNode(child)
             },
 
             appendChildren: (el: HTMLElement, node: EditorNode) => {
@@ -149,6 +123,7 @@ export class IframeRenderer {
 
         el.dataset.type = node.type
         el.dataset.nodeId = node.id
+
         this.editor.nodeDomRegistry.register(node.id, el)
         this.domNodeMap.set(el, node.id)
 
@@ -169,18 +144,6 @@ export class IframeRenderer {
         return el
     }
 
-    // public mountNode(nodeId: string) {
-    //     const node = this.editor.getNode(nodeId)
-    //     if (!node) return
-
-    //     const parentDom = this.editor.nodeDomRegistry.get(node.parent!)
-    //     if (!parentDom) return
-
-    //     const dom = this.renderNode(node)
-
-    //     parentDom.appendChild(dom)
-    // }
-
     public mountNode(nodeId: string) {
         const node = this.editor.getNode(nodeId)
         if (!node || !node.parent) return
@@ -194,6 +157,8 @@ export class IframeRenderer {
         if (!parentNode) return
 
         const index = parentNode.children.indexOf(nodeId)
+
+        if (index === -1) return
 
         if (index >= parentDom.children.length) {
             parentDom.appendChild(dom)

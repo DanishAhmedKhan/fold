@@ -31,7 +31,7 @@ export interface EditorElement {
 export type RenderContext = {
     editor: Editor
 
-    renderNode: (node: EditorNode) => HTMLElement
+    renderNode: (nodeId: string) => HTMLElement
 
     appendChildren: (el: HTMLElement, node: EditorNode) => void
 }
