@@ -28,7 +28,7 @@ export interface EditorElement {
     handlesChildren?: boolean
 }
 
-type RenderContext = {
+export type RenderContext = {
     editor: Editor
 
     renderNode: (node: EditorNode) => HTMLElement

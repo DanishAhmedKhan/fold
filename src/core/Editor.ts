@@ -44,6 +44,8 @@ export class Editor {
     }
 
     public addNode(type: string, parentId: string) {
+        console.log(this.state.nodes)
+
         const element = this.elementRegistry.get(type)
         if (!element) throw new Error('Element not registered: ' + type)
 

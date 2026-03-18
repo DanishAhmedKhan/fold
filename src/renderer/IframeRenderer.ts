@@ -91,11 +91,11 @@ export class IframeRenderer {
         this.body.appendChild(dom)
     }
 
-    public renderNode(node: EditorNode): HTMLElement {
+    public renderNode2(node: EditorNode): HTMLElement {
         const element = this.editor.elementRegistry.get(node.type)
-        if (!element) {
-            throw new Error('Element not found: ' + node.type)
-        }
+        // if (!element) {
+        //     throw new Error('Element not found: ' + node.type)
+        // }
 
         const el = element ? element.render(this.doc, node) : this.doc.createElement('div')
 
@@ -120,16 +120,86 @@ export class IframeRenderer {
         return el
     }
 
+    public renderNode = (node: EditorNode): HTMLElement => {
+        const element = this.editor.elementRegistry.get(node.type)
+
+        let childrenHandled = false
+
+        const ctx = {
+            editor: this.editor,
+
+            renderNode: (childNode: EditorNode) => {
+                return this.renderNode(childNode)
+            },
+
+            appendChildren: (el: HTMLElement, node: EditorNode) => {
+                childrenHandled = true
+
+                node.children.forEach((childId) => {
+                    const child = this.editor.getNode(childId)
+                    if (!child) return
+
+                    const childDom = this.renderNode(child)
+                    el.appendChild(childDom)
+                })
+            },
+        }
+
+        const el = element ? element.render(this.doc, node, ctx) : this.doc.createElement('div')
+
+        el.dataset.type = node.type
+        el.dataset.nodeId = node.id
+        this.editor.nodeDomRegistry.register(node.id, el)
+        this.domNodeMap.set(el, node.id)
+
+        el.classList.add(`fe-node-${node.id}`)
+
+        this.styles.updateNodeStyles(node.id, node.styles)
+
+        if (!childrenHandled && !element?.handlesChildren) {
+            node.children.forEach((childId) => {
+                const child = this.editor.getNode(childId)
+                if (!child) return
+
+                const childDom = this.renderNode(child)
+                el.appendChild(childDom)
+            })
+        }
+
+        return el
+    }
+
+    // public mountNode(nodeId: string) {
+    //     const node = this.editor.getNode(nodeId)
+    //     if (!node) return
+
+    //     const parentDom = this.editor.nodeDomRegistry.get(node.parent!)
+    //     if (!parentDom) return
+
+    //     const dom = this.renderNode(node)
+
+    //     parentDom.appendChild(dom)
+    // }
+
     public mountNode(nodeId: string) {
         const node = this.editor.getNode(nodeId)
-        if (!node) return
+        if (!node || !node.parent) return
 
-        const parentDom = this.editor.nodeDomRegistry.get(node.parent!)
+        const parentDom = this.editor.nodeDomRegistry.get(node.parent)
         if (!parentDom) return
 
         const dom = this.renderNode(node)
 
-        parentDom.appendChild(dom)
+        const parentNode = this.editor.getNode(node.parent)
+        if (!parentNode) return
+
+        const index = parentNode.children.indexOf(nodeId)
+
+        if (index >= parentDom.children.length) {
+            parentDom.appendChild(dom)
+        } else {
+            parentDom.insertBefore(dom, parentDom.children[index])
+        }
     }
 
     public unmountNode(nodeId: string) {

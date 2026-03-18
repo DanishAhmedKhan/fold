@@ -1,6 +1,25 @@
 import type { EditorElement } from './types'
 import type { EditorNode } from '../core/types'
 
+// export const RootElement: EditorElement = {
+//     type: 'root',
+//     name: 'Root',
+
+//     create() {
+//         return {}
+//     },
+
+//     render(doc, node, ctx) {
+//         const el = doc.createElement('div')
+
+//         el.style.minHeight = '100vh'
+
+//         ctx.appendChildren(el, node)
+
+//         return el
+//     },
+// }
+
 export const TextElement: EditorElement = {
     type: 'text',
 
@@ -93,25 +112,20 @@ export const RowElement: EditorElement = {
 
     create() {
         return {
-            props: {
-                columns: 2,
-            },
             styles: {
                 desktop: {
                     display: 'flex',
                     gap: '10px',
                 },
             },
+            children: ['column', 'column'],
         }
     },
 
     render(doc, node, ctx) {
         const el = doc.createElement('div')
 
-        node.children.forEach((childId) => {
-            const childEl = ctx.renderNode(childId)
-            el.appendChild(childEl)
-        })
+        ctx.appendChildren(el, node)
 
         return el
     },
@@ -133,13 +147,8 @@ export const ColumnElement: EditorElement = {
         }
     },
 
-    render(doc, node, ctx) {
+    render(doc) {
         const el = doc.createElement('div')
-
-        node.children.forEach((childId) => {
-            const childEl = ctx.renderNode(childId)
-            el.appendChild(childEl)
-        })
 
         return el
     },
@@ -153,7 +162,9 @@ export const SectionElement: EditorElement = {
         return {
             styles: {
                 desktop: {
+                    display: 'grid',
                     padding: '100px',
+                    gridTemplateColumns: 'repeat(2, 1fr)',
                     border: '1px solid red',
                 },
             },
@@ -161,16 +172,18 @@ export const SectionElement: EditorElement = {
         }
     },
 
-    render(doc, node, ctx) {
+    render(doc) {
         const el = doc.createElement('div')
-
-        node.children.forEach((childId) => {
-            const childEl = ctx.renderNode(childId)
-            el.appendChild(childEl)
-        })
-
         return el
     },
 }
 
-export const BuiltInElements = [TextElement, ButtonElement, BoxElement, RowElement, ColumnElement, SectionElement]
+export const BuiltInElements = [
+    // RootElement,
+    TextElement,
+    ButtonElement,
+    BoxElement,
+    RowElement,
+    ColumnElement,
+    SectionElement,
+]

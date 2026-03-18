@@ -29,6 +29,8 @@ export class EditorStore {
                 isResizing: false,
             },
         }
+
+        console.log(this.state.nodes)
     }
 
     public subscribe(fn: (patch: EditorPatch) => void) {
