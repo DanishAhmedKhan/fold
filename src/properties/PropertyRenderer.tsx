@@ -1,6 +1,6 @@
 import React from 'react'
 import type { Editor } from '../core/Editor'
-import type { ElementProperty } from '../elements/types'
+import type { ElementProperty } from '../elements/EditorElement'
 
 export function PropertyRenderer({
     editor,

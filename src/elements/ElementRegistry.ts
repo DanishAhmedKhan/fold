@@ -1,4 +1,4 @@
-import type { EditorElement } from './types'
+import type { EditorElement } from './EditorElement'
 
 export class ElementRegistry {
     private elements = new Map<string, EditorElement>()

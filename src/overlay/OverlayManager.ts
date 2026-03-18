@@ -9,6 +9,7 @@ import { LayoutSnapshotEngine } from './LayoutSnapshotEngine'
 import { OverlayBarFactory } from './OverlayBarFactory'
 
 import type { OverlayBarInstance } from './OverlayTypes'
+import type { OverlayBorderStyle } from './OverlatConfig'
 
 export class OverlayManager {
     public overlayRoot!: HTMLElement
@@ -22,7 +23,11 @@ export class OverlayManager {
     private rendererUI!: OverlayRenderer
     private snapshotEngine!: LayoutSnapshotEngine
 
+    private overlayBarFactory!: OverlayBarFactory
+
     private rafId: number | null = null
+
+    private lastNodeId: string | null = null
 
     constructor(public editor: Editor, public renderer: IframeRenderer) {}
 
@@ -36,9 +41,9 @@ export class OverlayManager {
 
         this.createBoxes()
 
-        const factory = new OverlayBarFactory(defaultOverlayConfig, this.overlayRoot, this.barInstances)
+        this.overlayBarFactory = new OverlayBarFactory(defaultOverlayConfig, this.overlayRoot, this.barInstances)
 
-        factory.createBars()
+        this.overlayBarFactory.createBars()
 
         this.snapshotEngine = new LayoutSnapshotEngine(
             this.editor.nodeDomRegistry,
@@ -53,6 +58,23 @@ export class OverlayManager {
         this.startLoop()
     }
 
+    // private startLoop() {
+    //     const loop = () => {
+    //         const snapshot = this.snapshotEngine.capture()
+
+    //         const hovered = this.editor.state.hoveredId
+    //         const selected = [...this.editor.state.selectedIds][0]
+
+    //         const layout = this.layout.compute(snapshot, hovered, selected)
+
+    //         this.rendererUI.render(layout)
+
+    //         this.rafId = requestAnimationFrame(loop)
+    //     }
+
+    //     loop()
+    // }
+
     private startLoop() {
         const loop = () => {
             const snapshot = this.snapshotEngine.capture()
@@ -61,6 +83,16 @@ export class OverlayManager {
             const selected = [...this.editor.state.selectedIds][0]
 
             const layout = this.layout.compute(snapshot, hovered, selected)
+
+            const activeNodeId = hovered || selected
+
+            if (activeNodeId && activeNodeId !== this.lastNodeId) {
+                const node = this.editor.getNode(activeNodeId)
+                if (node) {
+                    this.overlayBarFactory.updateBarContent(node)
+                    this.lastNodeId = activeNodeId
+                }
+            }
 
             this.rendererUI.render(layout)
 
@@ -71,26 +103,30 @@ export class OverlayManager {
     }
 
     private createBoxes() {
-        const create = () => {
+        const create = ({ width, style, color }: OverlayBorderStyle) => {
             const el = document.createElement('div')
 
             el.style.position = 'absolute'
             el.style.pointerEvents = 'none'
             el.style.boxSizing = 'border-box'
+            el.style.zIndex = '99999'
+
+            const border = `${width}px ${style} ${color}`
+            el.style.border = border
 
             this.overlayRoot.appendChild(el)
 
             return el
         }
 
-        this.hoverBox = create()
-        this.selectionBox = create()
+        this.hoverBox = create(defaultOverlayConfig.hover)
+        this.selectionBox = create(defaultOverlayConfig.selection)
 
-        this.hoverBox.style.border = '1px dashed #999'
-        this.selectionBox.style.border = '2px solid #3b82f6'
+        this.hoverBox.style.zIndex = '9999'
+        this.selectionBox.style.zIndex = '999'
     }
 
-    destroy() {
+    public destroy() {
         if (this.rafId) cancelAnimationFrame(this.rafId)
     }
 }

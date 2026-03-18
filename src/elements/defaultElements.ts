@@ -1,4 +1,4 @@
-import type { EditorElement } from './types'
+import type { EditorElement } from './EditorElement'
 import type { EditorNode } from '../core/types'
 
 export const TextElement: EditorElement = {

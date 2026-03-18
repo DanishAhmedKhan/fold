@@ -1,6 +1,6 @@
 import { BuiltInElements } from '../elements/defaultElements'
 import { ElementRegistry } from '../elements/ElementRegistry'
-import type { EditorElement } from '../elements/types'
+import type { EditorElement } from '../elements/EditorElement'
 import { generateId } from '../helper/generateId'
 import { NodeDOMRegistry } from '../overlay/NodeDomRegistry'
 import { PropertyControlRegistry } from '../properties/PropertyControlRegistry'

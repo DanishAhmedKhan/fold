@@ -3,8 +3,8 @@ import type { OverlayConfig } from './OverlatConfig'
 export const defaultOverlayConfig: OverlayConfig = {
     hover: {
         color: '#999',
-        width: 1,
-        style: 'dashed',
+        width: 2,
+        style: 'solid',
     },
 
     selection: {
@@ -63,7 +63,8 @@ export const defaultOverlayConfig: OverlayConfig = {
             actions: [
                 {
                     id: 'element-label',
-                    label: 'Element',
+                    // label: 'Element',
+                    label: '${element.type}',
                 },
             ],
         },

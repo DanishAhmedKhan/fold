@@ -5,7 +5,7 @@ import { IframeStyleSheetManager } from './IframeStyleSheetManager'
 import type { EditorNode } from '../core/types'
 import type { EditorPatch } from '../core/EditorPatch'
 import { OverlayInteractionManager } from '../interaction/OverlayInteractionManager'
-import type { RenderContext } from '../elements/types'
+import type { RenderContext } from '../elements/EditorElement'
 
 export class IframeRenderer {
     public editor: Editor

@@ -36,7 +36,7 @@ export interface OverlayBarConfig {
 }
 
 export interface OverlayBorderStyle {
-    color: string
+    color?: string
     width?: number
     style?: 'solid' | 'dashed' | 'dotted'
     radius?: number
