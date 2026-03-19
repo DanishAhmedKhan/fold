@@ -9,18 +9,18 @@ import { LayoutSnapshotEngine } from './LayoutSnapshotEngine'
 import { OverlayBarFactory } from './OverlayBarFactory'
 
 import type { OverlayBarInstance } from './OverlayTypes'
-import type { OverlayBorderStyle } from './OverlatConfig'
+import { OverlayBox } from './OverlayBox'
 
 export class OverlayManager {
     public overlayRoot!: HTMLElement
 
-    public hoverBox!: HTMLElement
-    public selectionBox!: HTMLElement
+    public hoverBox!: OverlayBox
+    public selectionBox!: OverlayBox
 
     private barInstances = new Map<string, OverlayBarInstance>()
 
     private layout!: OverlayLayoutEngine
-    private rendererUI!: OverlayRenderer
+    private renderer!: OverlayRenderer
     private snapshotEngine!: LayoutSnapshotEngine
 
     private overlayBarFactory!: OverlayBarFactory
@@ -29,7 +29,7 @@ export class OverlayManager {
 
     private lastNodeId: string | null = null
 
-    constructor(public editor: Editor, public renderer: IframeRenderer) {}
+    constructor(public editor: Editor, public iframeRenderer: IframeRenderer) {}
 
     public mount(container: HTMLElement) {
         this.overlayRoot = container
@@ -39,7 +39,8 @@ export class OverlayManager {
         this.overlayRoot.style.inset = '0'
         this.overlayRoot.style.pointerEvents = 'none'
 
-        this.createBoxes()
+        this.hoverBox = new OverlayBox(this.overlayRoot, defaultOverlayConfig.hover)
+        this.selectionBox = new OverlayBox(this.overlayRoot, defaultOverlayConfig.selection)
 
         this.overlayBarFactory = new OverlayBarFactory(defaultOverlayConfig, this.overlayRoot, this.barInstances)
 
@@ -47,13 +48,13 @@ export class OverlayManager {
 
         this.snapshotEngine = new LayoutSnapshotEngine(
             this.editor.nodeDomRegistry,
-            this.renderer.iframe,
+            this.iframeRenderer.iframe,
             this.overlayRoot,
         )
 
         this.layout = new OverlayLayoutEngine(defaultOverlayConfig, this.overlayRoot, this.barInstances)
 
-        this.rendererUI = new OverlayRenderer(this.hoverBox, this.selectionBox, this.barInstances)
+        this.renderer = new OverlayRenderer(this.hoverBox, this.selectionBox, this.barInstances)
 
         this.startLoop()
     }
@@ -94,36 +95,12 @@ export class OverlayManager {
                 }
             }
 
-            this.rendererUI.render(layout)
+            this.renderer.render(layout)
 
             this.rafId = requestAnimationFrame(loop)
         }
 
         loop()
-    }
-
-    private createBoxes() {
-        const create = ({ width, style, color }: OverlayBorderStyle) => {
-            const el = document.createElement('div')
-
-            el.style.position = 'absolute'
-            el.style.pointerEvents = 'none'
-            el.style.boxSizing = 'border-box'
-            el.style.zIndex = '99999'
-
-            const border = `${width}px ${style} ${color}`
-            el.style.border = border
-
-            this.overlayRoot.appendChild(el)
-
-            return el
-        }
-
-        this.hoverBox = create(defaultOverlayConfig.hover)
-        this.selectionBox = create(defaultOverlayConfig.selection)
-
-        this.hoverBox.style.zIndex = '9999'
-        this.selectionBox.style.zIndex = '999'
     }
 
     public destroy() {

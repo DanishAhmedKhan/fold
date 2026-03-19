@@ -35,6 +35,11 @@ export interface OverlayBarConfig {
     }
 }
 
+export interface OverlayBoxConfig {
+    borderStyle: OverlayBorderStyle
+    index: number
+}
+
 export interface OverlayBorderStyle {
     color?: string
     width?: number
@@ -43,8 +48,8 @@ export interface OverlayBorderStyle {
 }
 
 export interface OverlayConfig {
-    hover: OverlayBorderStyle
-    selection: OverlayBorderStyle
+    hover: OverlayBoxConfig
+    selection: OverlayBoxConfig
 
     bars: OverlayBarConfig[]
 }

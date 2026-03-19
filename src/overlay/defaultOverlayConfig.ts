@@ -2,15 +2,21 @@ import type { OverlayConfig } from './OverlatConfig'
 
 export const defaultOverlayConfig: OverlayConfig = {
     hover: {
-        color: '#999',
-        width: 2,
-        style: 'solid',
+        borderStyle: {
+            color: '#999',
+            width: 2,
+            style: 'solid',
+        },
+        index: 9999,
     },
 
     selection: {
-        color: '#3b82f6',
-        width: 2,
-        style: 'solid',
+        borderStyle: {
+            color: '#3b82f6',
+            width: 2,
+            style: 'solid',
+        },
+        index: 999,
     },
 
     bars: [

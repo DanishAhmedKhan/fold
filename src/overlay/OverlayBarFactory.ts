@@ -50,7 +50,8 @@ export class OverlayBarFactory {
     private createBarElement(bar: OverlayBarConfig, mode: 'hover' | 'selection') {
         const el = document.createElement('div')
 
-        const overlayColor = mode === 'hover' ? this.config.hover.color : this.config.selection.color
+        const overlayColor =
+            mode === 'hover' ? this.config.hover.borderStyle.color : this.config.selection.borderStyle.color
         const overlayZIndex = mode === 'hover' ? '9999' : '999'
 
         el.style.position = 'absolute'
