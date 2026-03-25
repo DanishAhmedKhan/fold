@@ -9,10 +9,16 @@ import { LayoutSnapshotEngine } from './LayoutSnapshotEngine'
 import { OverlayBarFactory } from './OverlayBarFactory'
 
 import type { OverlayBarInstance } from './OverlayTypes'
-import { OverlayBox } from './OverlayBox'
+import { OverlayBox } from './elements/OverlayBox'
+import { OverlayLayer } from './elements/OverlayLayer'
+
+export type OverlayMode = 'hover' | 'selection'
 
 export class OverlayManager {
     public overlayRoot!: HTMLElement
+
+    private hoverLayer!: OverlayLayer
+    private selectionLayer!: OverlayLayer
 
     public hoverBox!: OverlayBox
     public selectionBox!: OverlayBox
@@ -39,8 +45,11 @@ export class OverlayManager {
         this.overlayRoot.style.inset = '0'
         this.overlayRoot.style.pointerEvents = 'none'
 
-        this.hoverBox = new OverlayBox(this.overlayRoot, defaultOverlayConfig.hover)
-        this.selectionBox = new OverlayBox(this.overlayRoot, defaultOverlayConfig.selection)
+        this.hoverLayer = new OverlayLayer(this.overlayRoot, defaultOverlayConfig, 'hover')
+        this.selectionLayer = new OverlayLayer(this.overlayRoot, defaultOverlayConfig, 'selection')
+
+        this.hoverBox = new OverlayBox(this.overlayRoot, 'hover', defaultOverlayConfig.hover)
+        this.selectionBox = new OverlayBox(this.overlayRoot, 'seletion', defaultOverlayConfig.selection)
 
         this.overlayBarFactory = new OverlayBarFactory(defaultOverlayConfig, this.overlayRoot, this.barInstances)
 
@@ -76,26 +85,47 @@ export class OverlayManager {
     //     loop()
     // }
 
+    // private startLoop() {
+    //     const loop = () => {
+    //         const snapshot = this.snapshotEngine.capture()
+
+    //         const hovered = this.editor.state.hoveredId
+    //         const selected = [...this.editor.state.selectedIds][0]
+
+    //         const layout = this.layout.compute(snapshot, hovered, selected)
+
+    //         const activeNodeId = hovered || selected
+
+    //         if (activeNodeId && activeNodeId !== this.lastNodeId) {
+    //             const node = this.editor.getNode(activeNodeId)
+    //             if (node) {
+    //                 this.overlayBarFactory.updateBarContent(node)
+    //                 this.lastNodeId = activeNodeId
+    //             }
+    //         }
+
+    //         this.renderer.render(layout)
+
+    //         this.rafId = requestAnimationFrame(loop)
+    //     }
+
+    //     loop()
+    // }
+
     private startLoop() {
         const loop = () => {
             const snapshot = this.snapshotEngine.capture()
 
-            const hovered = this.editor.state.hoveredId
-            const selected = [...this.editor.state.selectedIds][0]
+            const hoveredId = this.editor.state.hoveredId
+            const selectedId = [...this.editor.state.selectedIds][0]
 
-            const layout = this.layout.compute(snapshot, hovered, selected)
+            const layout = this.layout.compute(snapshot, hoveredId, selectedId)
 
-            const activeNodeId = hovered || selected
+            const hoveredNode = hoveredId ? this.editor.getNode(hoveredId) : undefined
+            const selectedNode = selectedId ? this.editor.getNode(selectedId) : undefined
 
-            if (activeNodeId && activeNodeId !== this.lastNodeId) {
-                const node = this.editor.getNode(activeNodeId)
-                if (node) {
-                    this.overlayBarFactory.updateBarContent(node)
-                    this.lastNodeId = activeNodeId
-                }
-            }
-
-            this.renderer.render(layout)
+            this.hoverLayer.update(hoveredNode, layout)
+            this.selectionLayer.update(selectedNode, layout)
 
             this.rafId = requestAnimationFrame(loop)
         }

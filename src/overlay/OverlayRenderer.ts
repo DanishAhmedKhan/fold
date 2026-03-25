@@ -1,4 +1,4 @@
-import type { OverlayBox } from './OverlayBox'
+import type { OverlayBox } from './elements/OverlayBox'
 import type { OverlayBarInstance, OverlayLayout } from './OverlayTypes'
 
 export class OverlayRenderer {
