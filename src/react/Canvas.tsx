@@ -28,6 +28,7 @@ export function Canvas({ editor }: { editor: Editor }) {
 
     return (
         <div
+            id="fold-canvas"
             style={{
                 flex: 1,
                 background: '#f3f3f3',
@@ -38,7 +39,7 @@ export function Canvas({ editor }: { editor: Editor }) {
             }}
         >
             <div
-                id="canvas-frame"
+                id="fold-canvas-frame"
                 style={{
                     position: 'relative',
                     width: device === 'responsive' ? '100%' : width,
@@ -50,6 +51,7 @@ export function Canvas({ editor }: { editor: Editor }) {
                 }}
             >
                 <iframe
+                    id="fold-canvas-iframe"
                     ref={iframeRef}
                     style={{
                         width: '100%',
@@ -62,6 +64,7 @@ export function Canvas({ editor }: { editor: Editor }) {
                 {device !== 'responsive' && <ResizeHandle editor={editor} />}
 
                 <div
+                    id="fold-canvas-overlay"
                     ref={overlayRef}
                     style={{
                         position: 'absolute',

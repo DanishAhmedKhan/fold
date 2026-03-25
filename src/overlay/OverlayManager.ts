@@ -39,6 +39,7 @@ export class OverlayManager {
 
     public mount(container: HTMLElement) {
         this.overlayRoot = container
+        this.overlayRoot.id = 'fold-canvas-overlay'
         this.overlayRoot.innerHTML = ''
 
         this.overlayRoot.style.position = 'absolute'
@@ -48,12 +49,12 @@ export class OverlayManager {
         this.hoverLayer = new OverlayLayer(this.overlayRoot, defaultOverlayConfig, 'hover')
         this.selectionLayer = new OverlayLayer(this.overlayRoot, defaultOverlayConfig, 'selection')
 
-        this.hoverBox = new OverlayBox(this.overlayRoot, 'hover', defaultOverlayConfig.hover)
-        this.selectionBox = new OverlayBox(this.overlayRoot, 'seletion', defaultOverlayConfig.selection)
+        // this.hoverBox = new OverlayBox(this.overlayRoot, 'hover', defaultOverlayConfig.hover)
+        // this.selectionBox = new OverlayBox(this.overlayRoot, 'seletion', defaultOverlayConfig.selection)
 
-        this.overlayBarFactory = new OverlayBarFactory(defaultOverlayConfig, this.overlayRoot, this.barInstances)
+        // this.overlayBarFactory = new OverlayBarFactory(defaultOverlayConfig, this.overlayRoot, this.barInstances)
 
-        this.overlayBarFactory.createBars()
+        // this.overlayBarFactory.createBars()
 
         this.snapshotEngine = new LayoutSnapshotEngine(
             this.editor.nodeDomRegistry,
@@ -63,7 +64,7 @@ export class OverlayManager {
 
         this.layout = new OverlayLayoutEngine(defaultOverlayConfig, this.overlayRoot, this.barInstances)
 
-        this.renderer = new OverlayRenderer(this.hoverBox, this.selectionBox, this.barInstances)
+        // this.renderer = new OverlayRenderer(this.hoverBox, this.selectionBox, this.barInstances)
 
         this.startLoop()
     }
@@ -119,9 +120,11 @@ export class OverlayManager {
             const hoveredId = this.editor.state.hoveredId
             const selectedId = [...this.editor.state.selectedIds][0]
 
-            const layout = this.layout.compute(snapshot, hoveredId, selectedId)
+            const effectiveHoverId = hoveredId && hoveredId !== selectedId ? hoveredId : undefined
 
-            const hoveredNode = hoveredId ? this.editor.getNode(hoveredId) : undefined
+            const layout = this.layout.compute(snapshot, effectiveHoverId, selectedId)
+
+            const hoveredNode = effectiveHoverId ? this.editor.getNode(effectiveHoverId) : undefined
             const selectedNode = selectedId ? this.editor.getNode(selectedId) : undefined
 
             this.hoverLayer.update(hoveredNode, layout)

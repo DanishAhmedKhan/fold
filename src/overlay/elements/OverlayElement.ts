@@ -16,15 +16,18 @@ export abstract class OverlayElement {
     }
 
     public show() {
-        this.el.style.display = 'block'
+        this.el.style.display = 'flex'
     }
 
     public hide() {
-        this.el.style.display = 'hide'
+        this.el.style.display = 'none'
     }
 
     public setNode(node?: EditorNode) {
+        if (this.currentNode?.id === node?.id) return
+
         this.currentNode = node
+
         if (node) this.onNodeChange(node)
     }
 

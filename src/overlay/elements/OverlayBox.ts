@@ -13,6 +13,7 @@ export class OverlayBox extends OverlayElement {
 
     private create() {
         this.createBase()
+        this.el.setAttribute('fold-overlay-box-' + this.name, '')
 
         const { borderStyle, index } = this.config
 
@@ -21,6 +22,8 @@ export class OverlayBox extends OverlayElement {
 
         const { width, style, color } = borderStyle
         this.el.style.border = `${width}px ${style} ${color}`
+
+        this.hide()
     }
 
     public show(rect: Rect) {

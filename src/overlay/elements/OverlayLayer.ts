@@ -44,12 +44,16 @@ export class OverlayLayer {
         else this.box.hide()
 
         this.bars.forEach((bar) => {
-            const barLayout = layout.bars.find((b) => b.id === `${bar.config.id}-${this.mode}`)
+            // const barLayout = layout.bars.find((b) => b.id === `${bar.config.id}-${this.mode}`)
+
+            const barLayout = layout.bars.find((b) => b.id === bar.config.id)
 
             if (!barLayout) {
                 bar.hide()
                 return
             }
+
+            console.log('innnn')
 
             bar.setNode(node)
             bar.show()

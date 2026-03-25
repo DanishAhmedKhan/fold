@@ -3,21 +3,26 @@ import type { OverlayBarConfig, OverlayConfig } from '../OverlatConfig'
 import { OverlayElement } from './OverlayElement'
 
 export class OverlayBar extends OverlayElement {
+    public config: OverlayBarConfig
+
     private width = 80
     private height = 24
 
     constructor(
         overlayRoot: HTMLElement,
         name: string,
-        private config: OverlayBarConfig,
+        config: OverlayBarConfig,
         private overlayConfig: OverlayConfig,
     ) {
         super(overlayRoot, name)
+        this.config = config
+
         this.create()
     }
 
     private create() {
         this.createBase()
+        this.el.setAttribute('fold-overlay-bar-' + this.name, '')
 
         const overlayColor =
             this.name === 'hover'
@@ -33,7 +38,7 @@ export class OverlayBar extends OverlayElement {
         this.el.style.fontSize = '12px'
         this.el.style.color = 'white'
         this.el.style.alignItems = 'center'
-        this.el.style.background = overlayColor
+        this.el.style.background = overlayColor || 'blue'
         this.el.style.boxShadow = '0 1px 3px rgba(0,0,0,0.25)'
         this.el.style.zIndex = zIndex
 
@@ -72,7 +77,6 @@ export class OverlayBar extends OverlayElement {
             this.el.appendChild(btn)
         }
 
-        // measure once
         const rect = this.el.getBoundingClientRect()
         this.width = rect.width || 80
         this.height = rect.height || 24
