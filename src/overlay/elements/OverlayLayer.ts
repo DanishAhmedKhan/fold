@@ -1,7 +1,6 @@
 import type { EditorNode } from '../../core/types'
 import type { OverlayConfig } from '../OverlatConfig'
-import type { OverlayMode } from '../OverlayManager'
-import type { OverlayLayout } from '../OverlayTypes'
+import type { OverlayLayout, OverlayMode } from '../OverlayTypes'
 import { OverlayBar } from './OverlayBar'
 import { OverlayBox } from './OverlayBox'
 
@@ -40,20 +39,18 @@ export class OverlayLayer {
 
         const rect = this.mode === 'hover' ? layout.hoverRect : layout.selectionRect
 
-        if (rect) this.box.show(rect)
-        else this.box.hide()
+        if (rect) {
+            this.box.update(rect)
+            this.box.show()
+        } else this.box.hide()
 
         this.bars.forEach((bar) => {
-            // const barLayout = layout.bars.find((b) => b.id === `${bar.config.id}-${this.mode}`)
-
-            const barLayout = layout.bars.find((b) => b.id === bar.config.id)
+            const barLayout = layout.bars.find((b) => b.id === bar.config.id && b.mode === this.mode)
 
             if (!barLayout) {
                 bar.hide()
                 return
             }
-
-            console.log('innnn')
 
             bar.setNode(node)
             bar.show()

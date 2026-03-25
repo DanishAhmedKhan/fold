@@ -4,15 +4,10 @@ import { IframeRenderer } from '../renderer/IframeRenderer'
 import { defaultOverlayConfig } from './defaultOverlayConfig'
 
 import { OverlayLayoutEngine } from './OverlayLayoutEngine'
-import { OverlayRenderer } from './OverlayRenderer'
 import { LayoutSnapshotEngine } from './LayoutSnapshotEngine'
-import { OverlayBarFactory } from './OverlayBarFactory'
 
-import type { OverlayBarInstance } from './OverlayTypes'
 import { OverlayBox } from './elements/OverlayBox'
 import { OverlayLayer } from './elements/OverlayLayer'
-
-export type OverlayMode = 'hover' | 'selection'
 
 export class OverlayManager {
     public overlayRoot!: HTMLElement
@@ -23,17 +18,10 @@ export class OverlayManager {
     public hoverBox!: OverlayBox
     public selectionBox!: OverlayBox
 
-    private barInstances = new Map<string, OverlayBarInstance>()
-
     private layout!: OverlayLayoutEngine
-    private renderer!: OverlayRenderer
     private snapshotEngine!: LayoutSnapshotEngine
 
-    private overlayBarFactory!: OverlayBarFactory
-
     private rafId: number | null = null
-
-    private lastNodeId: string | null = null
 
     constructor(public editor: Editor, public iframeRenderer: IframeRenderer) {}
 
@@ -49,69 +37,16 @@ export class OverlayManager {
         this.hoverLayer = new OverlayLayer(this.overlayRoot, defaultOverlayConfig, 'hover')
         this.selectionLayer = new OverlayLayer(this.overlayRoot, defaultOverlayConfig, 'selection')
 
-        // this.hoverBox = new OverlayBox(this.overlayRoot, 'hover', defaultOverlayConfig.hover)
-        // this.selectionBox = new OverlayBox(this.overlayRoot, 'seletion', defaultOverlayConfig.selection)
-
-        // this.overlayBarFactory = new OverlayBarFactory(defaultOverlayConfig, this.overlayRoot, this.barInstances)
-
-        // this.overlayBarFactory.createBars()
-
         this.snapshotEngine = new LayoutSnapshotEngine(
             this.editor.nodeDomRegistry,
             this.iframeRenderer.iframe,
             this.overlayRoot,
         )
 
-        this.layout = new OverlayLayoutEngine(defaultOverlayConfig, this.overlayRoot, this.barInstances)
-
-        // this.renderer = new OverlayRenderer(this.hoverBox, this.selectionBox, this.barInstances)
+        this.layout = new OverlayLayoutEngine(defaultOverlayConfig, this.overlayRoot)
 
         this.startLoop()
     }
-
-    // private startLoop() {
-    //     const loop = () => {
-    //         const snapshot = this.snapshotEngine.capture()
-
-    //         const hovered = this.editor.state.hoveredId
-    //         const selected = [...this.editor.state.selectedIds][0]
-
-    //         const layout = this.layout.compute(snapshot, hovered, selected)
-
-    //         this.rendererUI.render(layout)
-
-    //         this.rafId = requestAnimationFrame(loop)
-    //     }
-
-    //     loop()
-    // }
-
-    // private startLoop() {
-    //     const loop = () => {
-    //         const snapshot = this.snapshotEngine.capture()
-
-    //         const hovered = this.editor.state.hoveredId
-    //         const selected = [...this.editor.state.selectedIds][0]
-
-    //         const layout = this.layout.compute(snapshot, hovered, selected)
-
-    //         const activeNodeId = hovered || selected
-
-    //         if (activeNodeId && activeNodeId !== this.lastNodeId) {
-    //             const node = this.editor.getNode(activeNodeId)
-    //             if (node) {
-    //                 this.overlayBarFactory.updateBarContent(node)
-    //                 this.lastNodeId = activeNodeId
-    //             }
-    //         }
-
-    //         this.renderer.render(layout)
-
-    //         this.rafId = requestAnimationFrame(loop)
-    //     }
-
-    //     loop()
-    // }
 
     private startLoop() {
         const loop = () => {
@@ -122,7 +57,17 @@ export class OverlayManager {
 
             const effectiveHoverId = hoveredId && hoveredId !== selectedId ? hoveredId : undefined
 
-            const layout = this.layout.compute(snapshot, effectiveHoverId, selectedId)
+            const sizes = new Map<string, { width: number; height: number }>()
+
+            this.hoverLayer.bars.forEach((bar) => {
+                sizes.set(`${bar.config.id}-hover`, bar.getSize())
+            })
+
+            this.selectionLayer.bars.forEach((bar) => {
+                sizes.set(`${bar.config.id}-selection`, bar.getSize())
+            })
+
+            const layout = this.layout.compute(snapshot, effectiveHoverId, selectedId, sizes)
 
             const hoveredNode = effectiveHoverId ? this.editor.getNode(effectiveHoverId) : undefined
             const selectedNode = selectedId ? this.editor.getNode(selectedId) : undefined

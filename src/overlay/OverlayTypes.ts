@@ -1,3 +1,5 @@
+export type OverlayMode = 'hover' | 'selection'
+
 export type Rect = {
     left: number
     top: number
@@ -13,6 +15,7 @@ export type LayoutSnapshot = {
 
 export interface BarLayout {
     id: string
+    mode: OverlayMode
     x: number
     y: number
 }

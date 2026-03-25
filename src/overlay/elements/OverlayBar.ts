@@ -5,9 +5,6 @@ import { OverlayElement } from './OverlayElement'
 export class OverlayBar extends OverlayElement {
     public config: OverlayBarConfig
 
-    private width = 80
-    private height = 24
-
     constructor(
         overlayRoot: HTMLElement,
         name: string,
@@ -77,15 +74,7 @@ export class OverlayBar extends OverlayElement {
             this.el.appendChild(btn)
         }
 
-        const rect = this.el.getBoundingClientRect()
-        this.width = rect.width || 80
-        this.height = rect.height || 24
-
         this.hide()
-    }
-
-    public updatePosition(x: number, y: number) {
-        this.el.style.transform = `translate3d(${x}px,${y}px,0)`
     }
 
     protected onNodeChange(node: EditorNode) {
@@ -97,20 +86,25 @@ export class OverlayBar extends OverlayElement {
 
             btn.textContent = this.resolveTemplate(template, node)
         })
+
+        this.measure()
     }
 
     private resolveTemplate(template: string, node: EditorNode): string {
-        return template.replace(/\$\{([^}]+)\}/g, (_, expr) => {
+        return template.replace(/\$\{([^}]+)\}/g, (_, expr: string) => {
             const path = expr.trim().split('.')
 
-            let value: any = { element: node }
+            let value: unknown = { element: node }
 
             for (const key of path) {
-                value = value?.[key]
-                if (value === undefined) return ''
+                if (typeof value === 'object' && value !== null && key in value) {
+                    value = (value as Record<string, unknown>)[key]
+                } else {
+                    return ''
+                }
             }
 
-            return String(value)
+            return value != null ? String(value) : ''
         })
     }
 }
