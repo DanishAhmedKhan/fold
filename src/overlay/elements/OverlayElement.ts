@@ -43,6 +43,35 @@ export abstract class OverlayElement {
         this.updateSize(rect.width, rect.height)
     }
 
+    protected applyTemplates(node: EditorNode) {
+        const elements = this.el.querySelectorAll<HTMLElement>('[data-template]')
+
+        elements.forEach((el) => {
+            const template = el.dataset.template
+            if (!template) return
+
+            el.textContent = this.resolveTemplate(template, node)
+        })
+    }
+
+    protected resolveTemplate(template: string, node: EditorNode): string {
+        return template.replace(/\$\{([^}]+)\}/g, (_, expr: string) => {
+            const path = expr.trim().split('.')
+
+            let value: unknown = { element: node }
+
+            for (const key of path) {
+                if (typeof value === 'object' && value !== null && key in value) {
+                    value = (value as Record<string, unknown>)[key]
+                } else {
+                    return ''
+                }
+            }
+
+            return value != null ? String(value) : ''
+        })
+    }
+
     protected measure() {
         const prevDisplay = this.el.style.display
 
@@ -67,8 +96,14 @@ export abstract class OverlayElement {
 
         this.currentNode = node
 
-        if (node) this.onNodeChange(node)
+        if (node) {
+            this.onNodeChange(node)
+            this.applyTemplates(node)
+            this.afterNodeUpdate()
+        }
     }
 
     protected abstract onNodeChange(node: EditorNode): void
+
+    protected afterNodeUpdate() {}
 }

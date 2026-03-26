@@ -1,4 +1,3 @@
-import type { EditorNode } from '../../core/types'
 import type { OverlayBarConfig, OverlayConfig } from '../OverlatConfig'
 import { OverlayElement } from './OverlayElement'
 
@@ -58,7 +57,7 @@ export class OverlayBar extends OverlayElement {
             btn.style.fontSize = '12px'
 
             if (action.label) {
-                btn.dataset.labelTemplate = action.label
+                btn.dataset.template = action.label
             }
 
             if (action.icon) {
@@ -77,34 +76,9 @@ export class OverlayBar extends OverlayElement {
         this.hide()
     }
 
-    protected onNodeChange(node: EditorNode) {
-        const buttons = this.el.querySelectorAll('button')
+    protected onNodeChange() {}
 
-        buttons.forEach((btn) => {
-            const template = btn.dataset.labelTemplate
-            if (!template) return
-
-            btn.textContent = this.resolveTemplate(template, node)
-        })
-
+    protected afterNodeUpdate() {
         this.measure()
-    }
-
-    private resolveTemplate(template: string, node: EditorNode): string {
-        return template.replace(/\$\{([^}]+)\}/g, (_, expr: string) => {
-            const path = expr.trim().split('.')
-
-            let value: unknown = { element: node }
-
-            for (const key of path) {
-                if (typeof value === 'object' && value !== null && key in value) {
-                    value = (value as Record<string, unknown>)[key]
-                } else {
-                    return ''
-                }
-            }
-
-            return value != null ? String(value) : ''
-        })
     }
 }

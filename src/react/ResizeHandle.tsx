@@ -10,7 +10,7 @@ export function ResizeHandle({ editor }: { editor: Editor }) {
     const handleRef = useRef<HTMLDivElement | null>(null)
 
     useEffect(() => {
-        frameRef.current = document.getElementById('canvas-frame') as HTMLDivElement
+        frameRef.current = document.getElementById('fold-canvas-frame') as HTMLDivElement
     }, [])
 
     const MIN_WIDTH = 320

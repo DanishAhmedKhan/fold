@@ -57,6 +57,13 @@ export class OverlayManager {
 
             const effectiveHoverId = hoveredId && hoveredId !== selectedId ? hoveredId : undefined
 
+            const hoveredNode = effectiveHoverId ? this.editor.getNode(effectiveHoverId) : undefined
+
+            const selectedNode = selectedId ? this.editor.getNode(selectedId) : undefined
+
+            this.hoverLayer.setNode(hoveredNode)
+            this.selectionLayer.setNode(selectedNode)
+
             const sizes = new Map<string, { width: number; height: number }>()
 
             this.hoverLayer.bars.forEach((bar) => {
@@ -69,11 +76,8 @@ export class OverlayManager {
 
             const layout = this.layout.compute(snapshot, effectiveHoverId, selectedId, sizes)
 
-            const hoveredNode = effectiveHoverId ? this.editor.getNode(effectiveHoverId) : undefined
-            const selectedNode = selectedId ? this.editor.getNode(selectedId) : undefined
-
-            this.hoverLayer.update(hoveredNode, layout)
-            this.selectionLayer.update(selectedNode, layout)
+            this.hoverLayer.render(layout)
+            this.selectionLayer.render(layout)
 
             this.rafId = requestAnimationFrame(loop)
         }
