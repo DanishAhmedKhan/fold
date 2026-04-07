@@ -1,6 +1,32 @@
 import type { EditorElement } from './EditorElement'
 import type { EditorNode } from '../core/types'
 
+export const InternalPlaceholderElement: EditorElement = {
+    type: '__placeholder__',
+    name: 'Placeholder',
+
+    create() {
+        return {
+            props: {},
+            styles: {},
+            children: [],
+        }
+    },
+
+    render(doc) {
+        const el = doc.createElement('div')
+
+        Object.assign(el.style, {
+            minHeight: '40px',
+            background: 'rgba(0,122,255,0.15)',
+            border: '2px solid #007aff',
+            boxSizing: 'border-box',
+        })
+
+        return el
+    },
+}
+
 export const TextElement: EditorElement = {
     type: 'text',
     name: 'Text',
@@ -120,6 +146,8 @@ export const ColumnElement: EditorElement = {
     render(doc) {
         return doc.createElement('div')
     },
+
+    placeholder: true,
 }
 
 export const SectionElement: EditorElement = {
@@ -144,6 +172,7 @@ export const SectionElement: EditorElement = {
 }
 
 export const BuiltInElements = [
+    InternalPlaceholderElement,
     // RootElement,
     TextElement,
     ButtonElement,

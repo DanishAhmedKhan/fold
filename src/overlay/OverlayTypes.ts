@@ -24,6 +24,7 @@ export interface OverlayLayout {
     hoverRect?: Rect | null
     selectionRect?: Rect | null
     bars: BarLayout[]
+    // placeholders: { nodeId: string; rect: Rect }[]
 }
 
 export type OverlayBarInstance = {

@@ -8,7 +8,7 @@ import { LayoutSnapshotEngine } from './LayoutSnapshotEngine'
 
 import { OverlayBox } from './elements/OverlayBox'
 import { OverlayLayer } from './elements/OverlayLayer'
-import { EmptySlotRenderer } from './EmptySlotRenderer'
+// import { PlaceholderLayer } from './EmptySlotRenderer'
 
 export class OverlayManager {
     public overlayRoot!: HTMLElement
@@ -21,7 +21,9 @@ export class OverlayManager {
 
     private layout!: OverlayLayoutEngine
     private snapshotEngine!: LayoutSnapshotEngine
-    private emptySlotRenderer!: EmptySlotRenderer
+
+    // private emptySlotRenderer: EmptySlotRenderer
+    // private placeholderLayer!: PlaceholderLayer
 
     private rafId: number | null = null
 
@@ -45,9 +47,10 @@ export class OverlayManager {
             this.overlayRoot,
         )
 
-        this.layout = new OverlayLayoutEngine(defaultOverlayConfig, this.overlayRoot)
+        this.layout = new OverlayLayoutEngine(defaultOverlayConfig, this.overlayRoot, this.editor)
 
-        this.emptySlotRenderer = new EmptySlotRenderer(this.editor, this.overlayRoot)
+        // this.emptySlotRenderer = new EmptySlotRenderer(this.editor, this.overlayRoot)
+        // this.placeholderLayer = new PlaceholderLayer(this.overlayRoot, this.editor)
 
         this.startLoop()
     }
@@ -83,6 +86,7 @@ export class OverlayManager {
             this.hoverLayer.render(layout)
             this.selectionLayer.render(layout)
 
+            // this.placeholderLayer.render(layout)
             // this.emptySlotRenderer.render()
 
             this.rafId = requestAnimationFrame(loop)

@@ -48,7 +48,8 @@ export class Editor {
         if (!element) throw new Error('Element not registered: ' + type)
 
         const id = generateId()
-        const defaults = element.create()
+        // const defaults = element.create()
+        const defaults = element.create ? element.create() : {}
 
         const node: EditorNode = {
             id,

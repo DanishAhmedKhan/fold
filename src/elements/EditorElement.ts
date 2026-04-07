@@ -27,7 +27,7 @@ export interface EditorElement {
 
     handlesChildren?: boolean
 
-    showPlaceholder?: (node: EditorNode, editor: Editor) => boolean
+    placeholder?: boolean
 }
 
 export type RenderContext = {
